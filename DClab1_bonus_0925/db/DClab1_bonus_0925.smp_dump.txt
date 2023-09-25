@@ -1,0 +1,7 @@
+
+State Machine - |DE2_115|Top:top0|state
+Name state.S_change_four state.S_change_two state.S_change_one state.S_IDLE 
+state.S_IDLE 0 0 0 0 
+state.S_change_one 0 0 1 1 
+state.S_change_two 0 1 0 1 
+state.S_change_four 1 0 0 1 
