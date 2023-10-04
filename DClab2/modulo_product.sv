@@ -14,7 +14,10 @@ module modulo_product (
 //counter
     always_comb begin
         count_next = count + 1;
-        if(count == 256) begin
+        if(count==0 && !start) begin
+            count_next = 0;
+        end
+        else if(count == 256) begin
             count_next = 0;
         end
         else begin
@@ -24,11 +27,16 @@ module modulo_product (
 // t
 
     always_comb begin
-        if(t+t>N) begin
-            t_next = t + t - N;
-        end
-        else begin
-            t_next = t + t;
+        if((count==0 && !start) || count==256) begin
+            t_next = t;
+        end 
+        else begin    
+            if(t+t>N) begin
+                t_next = t + t - N;
+            end
+            else begin
+                t_next = t + t;
+            end
         end
     end
 // m
