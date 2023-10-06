@@ -2,12 +2,12 @@ module doubi_product(
     input clk,
     input rst_n,
     input start,
-    input [255:0] N;
-    input [255:0] a;
-    input [255:0] b;
+    input [255:0] N,
+    input [255:0] a,
+    input [255:0] b,
 
-    output reg [255:0] m;
-    output reg finish;
+    output reg [255:0] m,
+    output reg finish
 );
 
     logic [8:0] count_next, count;
@@ -20,7 +20,7 @@ module doubi_product(
         if(count==0 && !start) begin
             count_next = 0;
         end
-        else if(count == 256) begin
+        else if(count == 257) begin
             count_next = 0;
         end
         else begin
@@ -48,7 +48,8 @@ module doubi_product(
 
     // finish
     always_comb begin
-        if(count==256 ||(count==0 && !start)) begin
+        finish_next=finish;
+        if(count==257 ||(count==0 && !start)) begin
             finish_next=1;
         end
         else if(start && count==0) begin
@@ -64,21 +65,11 @@ module doubi_product(
         if(count==0 && start) begin
             m_next=0;
         end
+        else if(count==0) begin
+            m_next=m;
+        end
         else begin
-            if(a_stable[count]==1) begin
-                m_next=m_next+b_stable;
-            end
-            else begin
-                m_next=m_next;
-            end
-            if m[0]==1 begin
-                m_next=m_next+N_stable;
-            end
-            else begin
-                m_next=m_next;
-            end
-            m_next=m_next>>1;
-            if(count==256) begin
+            if(count==257) begin
                 if(m>=N_stable) begin
                     m_next=m-N_stable;
                 end
@@ -87,7 +78,22 @@ module doubi_product(
                 end
             end
             else begin
-                m_next=m_next;
+                if(a_stable[(count-1)]==1)begin
+                    if((m[0]+b_stable[0])==1) begin
+                        m_next=((m+b_stable+N_stable)>>1);
+                    end
+                    else begin
+                        m_next=((m+b_stable)>>1);
+                    end
+                end
+                else begin
+                    if(m[0]==1)begin
+                        m_next=((m+N_stable)>>1);
+                    end
+                    else begin
+                        m_next=m>>1;
+                    end
+                end
             end
         end
     end
@@ -95,18 +101,19 @@ module doubi_product(
 
 
     //all_flipflops
-    always_ff @ (posedge clk or negedge rst) begin
-        if (!rst) begin
-            m<=256'0;
-            finish<=0;
-            count<=8'0;
-            N_stable<=256'0;
-            a_stable<=256'0;
-            b_stable<=256'0;
+    always_ff @ (posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            m<=256'b0;
+            finish<=1'b0;
+            count<=9'b0;
+            N_stable<=256'b0;
+            a_stable<=256'b0;
+            b_stable<=256'b0;
         end
         else begin
             m<=m_next;
             count<=count_next;
+            finish<=finish_next;
             N_stable<=N_next;
             a_stable<=a_next;
             b_stable<=b_next;
