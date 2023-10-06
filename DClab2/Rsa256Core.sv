@@ -105,6 +105,55 @@ module Rsa256Core (
 			state <= state_next;
 		end
 	end
+//control signal
+	always_comb begin
+		i_mod_start_w = i_mod_start_r;
+		i_mont_start_w = i_mont_start_r;
+		m_w = m_r;
+		t_w = t_r;
+		case (state)
+			S_IDLE: begin
+				if(i_start) begin
+					i_mod_start_w = 1;
+				end
+			end
+
+			S_MOD: begin
+				if(o_mod_finish) begin
+					i_mont_start_w = 1;
+					t_w = t_init;
+				end
+			end
+
+			S_MONT: begin //useless
+				
+				if(o_mont_m_finish && o_mont_t_finish) begin
+					i_mont_start_w = i_mont_start_r; //useless
+				end
+			end
+
+			S_Check: begin
+				i_mont_start_w = i_mont_start_r;
+				// if(top_count == 256) begin
+				// 	state_next = S_IDLE;
+				// end
+			end
+		endcase
+	end
+	always_ff @(posedge i_clk or negedge i_rst) begin
+		if(!i_rst) begin
+			i_mod_start_r <= 0;
+			i_mont_start_r <= 0;
+			m_r <= 256'b1;
+			t_r <= 0; // later use t_init to change
+		end
+		else begin
+			i_mod_start_r <= i_mod_start_w;
+			i_mont_start_r <= i_mont_start_w;
+			m_r <= m_w;
+			t_r <= t_w;
+		end
+	end
 
 //top counter
 	always_comb begin
