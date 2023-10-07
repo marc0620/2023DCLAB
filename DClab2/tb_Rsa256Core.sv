@@ -16,14 +16,19 @@ module tb();
         i_rst = 1'b1;
         i_start = 1'b0;
         i_a = 5;
-        i_n = 7;
-        i_d = 9;
+        i_n = 221;
+        i_d = 20;
 
         #1  i_rst=1'b0;
         #5  i_rst=1'b1;
         #20 i_start = 1'b1;
         #10 i_start = 1'b0;
-        #60000
+        #700000
+        $display("");
+        if(o_finished ==1) begin
+            $display("answer is %d ", o_a_pow_d);
+        end
+        $display("");
         #5  $finish;
     end
     always begin

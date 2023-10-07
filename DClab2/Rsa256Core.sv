@@ -16,10 +16,17 @@ module Rsa256Core (
 	logic i_mont_start_w,i_mont_start_r;
 	logic o_mod_finish, o_mont_m_finish, o_mont_t_finish;
 	logic [255:0] t_init,m_r,m_w,t_r,t_w;
-	logic result_m_mont, result_t_mont;
+	logic [255:0] result_m_mont, result_t_mont;
 	
 	logic [1:0] state,state_next;
 	logic [8:0] top_count, top_count_next;
+
+//for answer
+	logic o_finished_w,o_finished_r;
+	logic [255:0] o_a_pow_d_w,o_a_pow_d_r;
+
+	assign o_finished = o_finished_r;
+	assign o_a_pow_d = o_a_pow_d_r;
 
 	modulo_product m1(
 		.clk(i_clk),
@@ -91,8 +98,11 @@ module Rsa256Core (
 			S_Check: begin
 				state_next = state;
 
-				if(top_count == 256) begin
+				if(top_count == 255) begin
 					state_next = S_IDLE;
+				end
+				else begin
+					state_next = S_MONT;
 				end
 			end
 		endcase
@@ -111,6 +121,8 @@ module Rsa256Core (
 		i_mont_start_w = i_mont_start_r;
 		m_w = m_r;
 		t_w = t_r;
+		o_finished_w = o_finished_r;
+		o_a_pow_d_w = o_a_pow_d_r; 
 		case (state)
 			S_IDLE: begin
 				if(i_start) begin
@@ -125,18 +137,43 @@ module Rsa256Core (
 				end
 			end
 
-			S_MONT: begin //useless
+			S_MONT: begin
 				
-				if(o_mont_m_finish && o_mont_t_finish) begin
-					i_mont_start_w = i_mont_start_r; //useless
+				// if(o_mont_m_finish && o_mont_t_finish) begin
+				// 	i_mont_start_w = i_mont_start_r; //useless
+				// end
+				// if
+				// else begin
+				// 	i_mont_start_w = 0;
+				// end
+
+				i_mont_start_w = 0;
+
+				if(o_mont_m_finish) begin
+					m_w = (i_d[top_count]==1)? result_m_mont : m_r;
+				end
+				else begin
+					m_w = m_r;
+				end
+
+				if(o_mont_t_finish) begin
+					t_w = result_t_mont;
+				end
+				else begin
+					t_w = t_r;
 				end
 			end
 
 			S_Check: begin
 				i_mont_start_w = i_mont_start_r;
-				// if(top_count == 256) begin
-				// 	state_next = S_IDLE;
-				// end
+				if(top_count == 255) begin
+					i_mont_start_w = 0;
+					o_finished_w = 1;
+					o_a_pow_d_w = m_r;
+				end
+				else begin
+					i_mont_start_w = 1;
+				end
 			end
 		endcase
 	end
@@ -146,12 +183,16 @@ module Rsa256Core (
 			i_mont_start_r <= 0;
 			m_r <= 256'b1;
 			t_r <= 0; // later use t_init to change
+			o_finished_r <= 0;
+			o_a_pow_d_r <= 256'b0;
 		end
 		else begin
 			i_mod_start_r <= i_mod_start_w;
 			i_mont_start_r <= i_mont_start_w;
 			m_r <= m_w;
 			t_r <= t_w;
+			o_finished_r <= o_finished_w;
+			o_a_pow_d_r <= o_a_pow_d_w;
 		end
 	end
 
@@ -161,7 +202,7 @@ module Rsa256Core (
 		if(state == S_Check) begin
 			top_count_next = top_count + 1;
 		end
-		else if (state == S_Check && top_count==256) begin
+		if (state == S_Check && top_count==255) begin
 			top_count_next = 9'b0;
 		end
 	end
