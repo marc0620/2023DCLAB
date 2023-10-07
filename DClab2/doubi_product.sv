@@ -47,16 +47,26 @@ module doubi_product(
 
 
     // finish
+    // always_comb begin
+    //     finish_next=finish;
+    //     if(count==257 ||(count==0 && !start)) begin
+    //         finish_next=1;
+    //     end
+    //     else if(start && count==0) begin
+    //         finish_next=0;
+    //     end
+    //     else begin
+    //         finish_next=finish;
+    //     end
+    // end
     always_comb begin
-        if(count==257) begin
-            finish_next=1;
+        finish_next = finish;
+        if(count == 257) begin
+            finish_next = 1;
         end
-        else if(start && count==0) begin
-            finish_next=0;
-        end
-        else begin
-            finish_next=0;
-        end
+        if(count == 0 && finish ==1) begin
+            finish_next = 0;
+        end    
     end
 
     // algorithm
