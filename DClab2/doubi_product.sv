@@ -48,15 +48,14 @@ module doubi_product(
 
     // finish
     always_comb begin
-        finish_next=finish;
-        if(count==257 ||(count==0 && !start)) begin
+        if(count==257) begin
             finish_next=1;
         end
         else if(start && count==0) begin
             finish_next=0;
         end
         else begin
-            finish_next=finish;
+            finish_next=0;
         end
     end
 
