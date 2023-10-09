@@ -27,9 +27,18 @@ module modulo_product (
 // t
 
     always_comb begin
+        t_next = t;
         if((count==0 && !start) || count==256) begin
             t_next = t;
-        end 
+        end
+        else if(count ==0 && start) begin
+            if(y+y>N) begin
+                t_next = y + y - N;
+            end
+            else begin
+                t_next = y + y;
+            end
+        end
         else begin    
             if(t+t>N) begin
                 t_next = t + t - N;
@@ -38,6 +47,7 @@ module modulo_product (
                 t_next = t + t;
             end
         end
+       
     end
 // m
     always_comb begin
@@ -56,14 +66,17 @@ module modulo_product (
         finish_w = finish_r;
         if(count == 256) begin
             finish_w = 1;
-        end    
+        end
+        if(count == 0 && finish_r ==1) begin
+            finish_w = 0;
+        end   
     end
     
 //ff
     always_ff @(posedge clk or posedge rst) begin
         if(rst) begin
             count <= 9'b0;
-            t <= y;
+            t <= 258'b0;
             m <= 256'b0;
             finish_r <= 0;
         end
