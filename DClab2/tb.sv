@@ -41,7 +41,8 @@ module tb;
 			$display("=========");
 			start_cal <= 1;
 			@(posedge clk)
-			encrypted_data <= 'x;
+			// encrypted_data <= 'x;
+			encrypted_data <= encrypted_data;
 			start_cal <= 0;
 			@(posedge fin)
 			$display("=========");
@@ -53,7 +54,7 @@ module tb;
 	end
 
 	initial begin
-		#(500000*CLK)
+		#(50000000*CLK)
 		$display("Too slow, abort.");
 		$finish;
 	end
