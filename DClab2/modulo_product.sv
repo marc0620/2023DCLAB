@@ -11,6 +11,11 @@ module modulo_product (
     logic [255:0] m_next;
     logic [257:0] t,t_next;
     logic finish_w;
+
+    logic [256:0] y_add,t_add;
+
+    assign y_add = y + y;
+    assign t_add = t + t;
 //counter
     always_comb begin
         count_next = count + 1;
@@ -32,19 +37,19 @@ module modulo_product (
             t_next = t;
         end
         else if(count ==0 && start) begin
-            if(y+y>N) begin
-                t_next = y + y - N;
+            if(y_add>N) begin
+                t_next = y_add - N;
             end
             else begin
-                t_next = y + y;
+                t_next = y_add;
             end
         end
         else begin    
-            if(t+t>N) begin
-                t_next = t + t - N;
+            if(t_add>N) begin
+                t_next = t_add - N;
             end
             else begin
-                t_next = t + t;
+                t_next = t_add;
             end
         end
        

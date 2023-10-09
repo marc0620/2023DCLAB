@@ -14,6 +14,12 @@ module doubi_product(
     logic [255:0] N_stable, a_stable, b_stable, N_next, a_next, b_next, m_next;
     logic finish_next;
 
+    logic [257:0] three_add;
+    logic [256:0] add_m_b_stable;
+    logic [256:0] add_m_N_stable;
+    assign three_add = add_m_b_stable+N_stable;
+    assign add_m_b_stable = m+b_stable;
+    assign add_m_N_stable = m+N_stable;
     // counter
     always_comb begin
         count_next = count + 1;
@@ -89,15 +95,15 @@ module doubi_product(
             else begin
                 if(a_stable[(count-1)]==1)begin
                     if((m[0]+b_stable[0])==1) begin
-                        m_next=((m+b_stable+N_stable)>>1);
+                        m_next=((three_add)>>1);
                     end
                     else begin
-                        m_next=((m+b_stable)>>1);
+                        m_next=((add_m_b_stable)>>1);
                     end
                 end
                 else begin
                     if(m[0]==1)begin
-                        m_next=((m+N_stable)>>1);
+                        m_next=((add_m_N_stable)>>1);
                     end
                     else begin
                         m_next=m>>1;
