@@ -13,14 +13,18 @@ module tb();
         $dumpfile("Rsa256Core.fsdb");
         $dumpvars;
         i_clk = 1'b0;
-        i_rst = 1'b1;
+        i_rst = 1'b0;
         i_start = 1'b0;
-        i_a = 5;
-        i_n = 221;
-        i_d = 20;
+        // i_a = 5;
+        // i_n = 221;
+        // i_d = 20; 
 
-        #1  i_rst=1'b0;
-        #5  i_rst=1'b1;
+        i_n = 256'hca35_86e7_ea48_5f3b_0a22_2a4c_79f7_dd12_e853_88ec_cdee_4035_940d_774c_029c_f831;
+        i_d = 256'hb6ac_e0b1_4720_1698_39b1_5fd1_3326_cf1a_1829_beaf_c37b_b937_bec8_802f_bcf4_6bd9;
+        i_a = 256'hc6b6_62ec_b173_c53c_c7bb_4212_057f_9c0b_a283_e000_b98c_9dcf_5fea_ee7d_6c93_3dfb;
+
+        #1  i_rst=1'b1;
+        #5  i_rst=1'b0;
         #20 i_start = 1'b1;
         #10 i_start = 1'b0;
         #700000

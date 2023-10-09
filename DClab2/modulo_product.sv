@@ -60,8 +60,8 @@ module modulo_product (
     end
     
 //ff
-    always_ff @(posedge clk or negedge rst) begin
-        if(!rst) begin
+    always_ff @(posedge clk or posedge rst) begin
+        if(rst) begin
             count <= 9'b0;
             t <= y;
             m <= 256'b0;

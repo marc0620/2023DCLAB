@@ -1,6 +1,6 @@
 module doubi_product(
     input clk,
-    input rst_n,
+    input rst,
     input start,
     input [255:0] N,
     input [255:0] a,
@@ -110,8 +110,8 @@ module doubi_product(
 
 
     //all_flipflops
-    always_ff @ (posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
+    always_ff @ (posedge clk or posedge rst) begin
+        if (rst) begin
             m<=256'b0;
             finish<=1'b0;
             count<=9'b0;

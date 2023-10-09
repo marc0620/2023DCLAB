@@ -41,7 +41,7 @@ module Rsa256Core (
 	//m mont
 	doubi_product d1(
 		.clk(i_clk),
-		.rst_n(i_rst),
+		.rst(i_rst),
 		.start(i_mont_start_r),
 		.N(i_n),
 		.a(t_r),
@@ -53,7 +53,7 @@ module Rsa256Core (
 
 	doubi_product d2(
 		.clk(i_clk),
-		.rst_n(i_rst),
+		.rst(i_rst),
 		.start(i_mont_start_r),
 		.N(i_n),
 		.a(t_r),
@@ -107,8 +107,8 @@ module Rsa256Core (
 			end
 		endcase
 	end
-	always_ff @(posedge i_clk or negedge i_rst) begin
-		if(!i_rst) begin
+	always_ff @(posedge i_clk or posedge i_rst) begin
+		if(i_rst) begin
 			state <= S_IDLE;
 		end
 		else begin
@@ -177,8 +177,8 @@ module Rsa256Core (
 			end
 		endcase
 	end
-	always_ff @(posedge i_clk or negedge i_rst) begin
-		if(!i_rst) begin
+	always_ff @(posedge i_clk or posedge i_rst) begin
+		if(i_rst) begin
 			i_mod_start_r <= 0;
 			i_mont_start_r <= 0;
 			m_r <= 256'b1;
@@ -206,8 +206,8 @@ module Rsa256Core (
 			top_count_next = 9'b0;
 		end
 	end
-	always_ff @(posedge i_clk or negedge i_rst) begin
-		if(!i_rst) begin
+	always_ff @(posedge i_clk or posedge i_rst) begin
+		if(i_rst) begin
 			top_count <= 9'b0;
 		end
 		else begin
