@@ -61,7 +61,7 @@ def SendSingleFile(key_file, enc_file, dec_file):
     fp_dec.close()
 
 
-SendSingleFile('key.bin', 'enc.bin', 'dec.bin')
+SendSingleFile('key.bin', 'enc_long.bin', 'dec.bin')
 
 os.system("type dec.bin")
 
