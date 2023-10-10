@@ -6,17 +6,17 @@ module doubi_product(
     input [255:0] a,
     input [255:0] b,
 
-    output reg [255:0] m,
+    output reg [257:0] m,
     output reg finish
 );
 
     logic [8:0] count_next, count;
-    logic [255:0] N_stable, a_stable, b_stable, N_next, a_next, b_next, m_next;
+    logic [257:0] N_stable, a_stable, b_stable, N_next, a_next, b_next, m_next;
     logic finish_next;
 
     logic [257:0] three_add;
-    logic [256:0] add_m_b_stable;
-    logic [256:0] add_m_N_stable;
+    logic [257:0] add_m_b_stable;
+    logic [257:0] add_m_N_stable;
     assign three_add = add_m_b_stable+N_stable;
     assign add_m_b_stable = m+b_stable;
     assign add_m_N_stable = m+N_stable;

@@ -15,8 +15,8 @@ module Rsa256Core (
 	logic i_mod_start_w,i_mod_start_r;
 	logic i_mont_start_w,i_mont_start_r;
 	logic o_mod_finish, o_mont_m_finish, o_mont_t_finish;
-	logic [255:0] t_init,m_r,m_w,t_r,t_w;
-	logic [255:0] result_m_mont, result_t_mont;
+	logic [257:0] t_init,m_r,m_w,t_r,t_w;
+	logic [257:0] result_m_mont, result_t_mont;
 	
 	logic [1:0] state,state_next;
 	logic [8:0] top_count, top_count_next;
