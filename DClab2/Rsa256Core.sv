@@ -128,12 +128,18 @@ module Rsa256Core (
 				if(i_start) begin
 					i_mod_start_w = 1;
 				end
+
+				if(o_finished_r==1) begin
+					o_finished_w = 0;
+				end
 			end
 
 			S_MOD: begin
 				if(o_mod_finish) begin
+					i_mod_start_w = 0;
 					i_mont_start_w = 1;
 					t_w = t_init;
+					m_w = 1;
 				end
 			end
 

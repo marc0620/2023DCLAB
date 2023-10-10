@@ -64,7 +64,10 @@ module modulo_product (
             else begin
                 m_next = m + t;
             end
-        end    
+        end 
+        if(start && count==0) begin
+            m_next = 0;
+        end   
     end
 //finish
     always_comb begin
