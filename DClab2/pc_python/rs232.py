@@ -61,7 +61,17 @@ def SendSingleFile(key_file, enc_file, dec_file):
     fp_dec.close()
 
 
-SendSingleFile('key.bin', 'enc_long.bin', 'dec.bin')
+SendSingleFile('.\golden\key.bin', '.\golden\enc1.bin', '.\golden\dec1.bin')
+os.system("type .\golden\dec1.bin")
 
+SendSingleFile('.\golden\key.bin', '.\golden\enc2.bin', '.\golden\dec2.bin')
+os.system("type .\golden\dec2.bin")
+
+SendSingleFile('.\golden\key.bin', '.\golden\enc3.bin', '.\golden\dec3.bin')
+os.system("type .\golden\dec3.bin")
+
+SendSingleFile('key.bin', 'enc_long.bin', 'dec_long.bin')
+os.system("type dec_long.bin")
+
+SendSingleFile('key.bin', 'enc.bin', 'dec.bin')
 os.system("type dec.bin")
-
