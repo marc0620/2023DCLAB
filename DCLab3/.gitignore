@@ -1,0 +1,7 @@
+# ref: https://stackoverflow.com/questions/3637660/how-to-exclude-file-only-from-root-folder-in-git
+
+.DS_Store
+
+# Ignore everything in "quartus" directory except .v  and .qip files
+/quartus
+#
