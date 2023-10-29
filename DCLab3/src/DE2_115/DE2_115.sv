@@ -144,10 +144,13 @@ assign AUD_XCK = CLK_12M;
 myPll pll0( // generate with qsys, please follow lab2 tutorials
 	.clk_clk(CLOCK_50),
 	.reset_reset_n(key3down),
-	.altpll_100k_clk_clk(CLK_12M),
-	.altpll_12m_clk_clk(CLK_100K),
+	.altpll_100k_clk_clk(CLK_100K),
+	.altpll_12m_clk_clk(CLK_12M),
 	.altpll_800k_clk_clk(CLK_800K)
 );
+
+
+
 
 // you can decide key down settings on your own, below is just an example
 Debounce deb0(
@@ -171,7 +174,6 @@ Debounce deb2(
 	.o_neg(key2down) 
 );
 
-/*
 Top top0(
 	.i_rst_n(KEY[3]),
 	.i_clk(CLK_12M),
@@ -218,7 +220,7 @@ Top top0(
 	// .o_ledg(LEDG), // [8:0]
 	// .o_ledr(LEDR) // [17:0]
 );
-*/
+
 
 // SevenHexDecoder seven_dec0(
 // 	.i_num(play_time),
@@ -241,5 +243,7 @@ assign HEX4 = '1;
 assign HEX5 = '1;
 assign HEX6 = '1;
 assign HEX7 = '1;
+
+
 
 endmodule

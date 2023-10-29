@@ -2,6 +2,8 @@
 
 .DS_Store
 *.bak
+
 # Ignore everything in "quartus" directory except .v  and .qip files
 /quartus
+!**/*.v
 #
