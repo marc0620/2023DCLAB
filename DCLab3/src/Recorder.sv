@@ -17,25 +17,8 @@ logic [19:0] addr_next;
 logic [15:0] o_data_next,data_w;
 logic [4:0] counter,counter_next;
 logic [1:0] state,state_next;
-logic lrc_p, i_data_p;
+logic lrc_p;
 
-
-
-//fsm
-always_comb begin
-    if(i_start && (state == PAUSE || state== STOPPED)) begin
-        state_next = WAITING;
-    end
-    else if(i_pause && (state == RECORDING || state == WAITING))begin
-        state_next = PAUSE;
-    end
-    else if(i_stop)begin
-        state_next = STOPPED;
-    end
-    else begin
-        state_next = state;
-    end
-end
 
 
 always_comb begin
