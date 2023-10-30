@@ -7,7 +7,7 @@ module AudRecorder(
 	input i_stop,
 	input i_data,
 	output reg[19:0] o_address,
-	output reg[15:0] o_data,
+	output reg[15:0] o_data
 );
 parameter STOPPED = 0;
 parameter PAUSE= 1;
@@ -17,26 +17,32 @@ logic [19:0] addr_next;
 logic [15:0] o_data_next,data_w;
 logic [4:0] counter,counter_next;
 logic [1:0] state,state_next;
+logic first,first_next;
 logic lrc_p;
 
 
 
 always_comb begin
-    state_next = state;
     o_data_next=o_data;
     addr_next=o_address;
+    state_next=state;
+    counter_next=counter;
     case(state)
         STOPPED: begin
+            data_w=15'b0;
+            first_next=1'b1;
             if(i_start) begin
-                addr_next = 0;
-                o_data_next = 0;
+                addr_next = 20'b0;
+                o_data_next = 16'b0;
                 state_next = WAITING;
             end
             else begin
                 addr_next = o_address;
+                state_next=STOPPED;
             end
         end
         PAUSE: begin
+            data_w=15'b0;
             if(i_start) begin
                 state_next = WAITING;
             end
@@ -44,7 +50,7 @@ always_comb begin
                 state_next = STOPPED;
             end
             else begin
-                addr_next = o_address;
+                state_next=PAUSE;
             end
         end
         WAITING: begin
@@ -57,9 +63,24 @@ always_comb begin
             end
             else begin
                 if(lrc_p==1'b1 && i_lrc==1'b0) begin
-                    state_next = RECORDING;
-                    counter_next = 0;
-                end 
+                    counter_next = 5'b0;
+                    if(first && o_address==20'b0)begin
+                        first_next=1'b0;
+                        state_next = RECORDING;
+                    end
+                    else begin
+                        addr_next=o_address+1;
+                        if(addr_next==20'b0) begin
+                            state_next=STOPPED;
+                        end
+                        else begin
+                            state_next=RECORDING;
+                        end
+                    end
+                end
+                else begin
+                    state_next=WAITING;
+                end
             end
         end
         RECORDING: begin
@@ -74,17 +95,12 @@ always_comb begin
                     addr_next = o_address;
                     counter_next=counter+1;
                     data_w[15-counter] = i_data;
+                    state_next=RECORDING;
                 end
                 else begin
                     o_data_next = data_w;
-                    addr_next = o_address + 1;
                     counter_next=5'b0;
-                    if(addr_next = 20'b0) begin
-                        state_next = STOPPED;
-                    end
-                    else begin
-                        state_next = WAITING;
-                    end
+                    state_next=WAITING;
                 end
             end
         end
@@ -98,12 +114,16 @@ always_ff @(posedge i_clk or posedge i_rst_n) begin
         o_data <=0;
         lrc_p <= 0;
         state <= STOPPED;
+        counter<=1'b0;
+        first<=1'b1;
 	end
 	else begin
 		o_address <= addr_next;
         o_data <= o_data_next;
         lrc_p <= i_lrc;
         state <= state_next;
+        counter<= counter_next;
+        first<=first_next;
 	end
 end
 endmodule
