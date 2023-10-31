@@ -27,6 +27,7 @@ always_comb begin
     addr_next=o_address;
     state_next=state;
     counter_next=counter;
+    first_next=first;
     case(state)
         STOPPED: begin
             data_w=15'b0;
@@ -69,11 +70,11 @@ always_comb begin
                         state_next = RECORDING;
                     end
                     else begin
-                        addr_next=o_address+1;
-                        if(addr_next==20'b0) begin
+                        if(o_address==20'b1) begin
                             state_next=STOPPED;
                         end
                         else begin
+                            addr_next=o_address+1;
                             state_next=RECORDING;
                         end
                     end
