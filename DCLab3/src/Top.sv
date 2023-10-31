@@ -53,7 +53,7 @@ parameter S_RECD_PAUSE = 3;
 parameter S_PLAY       = 4;
 parameter S_PLAY_PAUSE = 5;
 
-logic i2c_oen, i2c_sdat, i2c_start, i2c_fin, i2c_start_next,i2c_sent,i2c_sent_next,rec_start,rec_start_next,rec_stop,rec_stop_next,rec_pause,rec_pause_next, play_en,play_en_next;
+logic i2c_oen, i2c_sdat, i2c_start, i2c_fin, i2c_start_next,i2c_sent,i2c_sent_next,rec_start,rec_start_next,rec_stop,rec_stop_next,rec_pause,rec_pause_next, play_en,play_en_next, dsp_start, dsp_start_next, dsp_pause, dsp_pause_next, dsp_stop, dsp_stop_next;
 logic [19:0] addr_record, addr_play;
 logic [15:0] data_record, data_play, dac_data;
 logic [2:0] state_r, state_w;
@@ -89,10 +89,10 @@ I2cInitializer init0(
 // in other words, determine which data addr to be fetch for player 
 AudDSP dsp0(
 	.i_rst_n(i_rst_n),
-	.i_clk(),
-	.i_start(),
-	.i_pause(),
-	.i_stop(),
+	.i_clk(i_AUD_BCLK),
+	.i_start(dsp_start),
+	.i_pause(dsp_pause),
+	.i_stop(dsp_stop),
 	.i_speed(),
 	.i_fast(),
 	.i_slow_0(), // constant interpolation
@@ -109,7 +109,7 @@ AudPlayer player0(
 	.i_rst_n(i_rst_n),
 	.i_bclk(i_AUD_BCLK),
 	.i_daclrck(i_AUD_DACLRCK),
-	.i_en(), // enable AudPlayer only when playing audio, work with AudDSP
+	.i_en(play_en), // enable AudPlayer only when playing audio, work with AudDSP
 	.i_dac_data(dac_data), //dac_data
 	.o_aud_dacdat(o_AUD_DACDAT)
 );
@@ -137,6 +137,9 @@ always_comb begin
 	rec_stop_next=rec_stop;
 	rec_pause_next=rec_pause;
 	play_en_next=play_en;
+	dsp_start_next=dsp_start;
+	dsp_pause_next=dsp_pause;
+	dsp_stop_next=dsp_stop;
 	case (state_r)
 		S_I2C: begin
 			if(i2c_start==1'b0 && i2c_sent==1'b0) begin
@@ -157,6 +160,7 @@ always_comb begin
 		end
 		S_IDLE: begin
 			rec_stop_next=1'b0;
+			dsp_stop_next=1'b0;
 			if(i_key_0==1'b1) begin
 				state_w=S_RECD;
 				rec_start_next=1'b1;
@@ -164,6 +168,7 @@ always_comb begin
 			else if(i_key_1==1'b1) begin
 				state_w=S_PLAY;
 				play_en_next=1'b1;
+				dsp_start_next=1'b1;
 			end
 			else begin
 				state_w=S_IDLE;
@@ -173,6 +178,7 @@ always_comb begin
 			rec_start_next=1'b0;
 			if(i_key_2 ==1'b1)begin
 				state_w=S_IDLE;
+				rec_stop_next=1'b1;
 			end
 			else if(i_key_0==1'b1) begin
 				state_w=S_RECD_PAUSE;
@@ -197,25 +203,30 @@ always_comb begin
 			end
 		end
 		S_PLAY: begin
+			dsp_start_next=1'b0;
 			if(i_key_2==1'b1) begin
 				state_w=S_IDLE;
+				dsp_stop_next=1'b1;
 				play_en_next=1'b0;
 			end
 			else if(i_key_1==1'b1) begin
+				dsp_pause_next=1'b1;
 				state_w=S_PLAY_PAUSE;
 				play_en_next=1'b0;
 			end
 			else begin
 				state_w=S_PLAY;
-
 			end
 		end
 		S_PLAY_PAUSE: begin
+			dsp_pause_next=1'b0;
 			if(i_key_2==1'b1) begin
 				state_w=S_IDLE;
+				dsp_stop_next=1'b1;
 				play_en_next=1'b0;
 			end
 			else if(i_key_1==1'b1) begin
+				dsp_start_next=1'b1;
 				state_w=S_PLAY;
 				play_en_next=1'b1;
 			end
@@ -236,6 +247,9 @@ always_ff @(posedge i_AUD_BCLK or posedge i_rst_n) begin
 		rec_stop<=1'b0;
 		rec_pause<=1'b0;
 		play_en<=1'b0;
+		dsp_start<=1'b0;
+		dsp_pause<=1'b0;
+		dsp_stop<=1'b0;
 	end
 	else begin
 		i2c_sent<=i2c_sent_next;
@@ -246,6 +260,10 @@ always_ff @(posedge i_AUD_BCLK or posedge i_rst_n) begin
 		rec_stop<=rec_stop_next;
 		rec_pause<=rec_pause_next;
 		play_en<=play_en_next;
+		dsp_start<=dsp_start_next;
+		dsp_pause<=dsp_pause_next;
+		dsp_stop<=dsp_stop_next;
+
 	end
 end
 
