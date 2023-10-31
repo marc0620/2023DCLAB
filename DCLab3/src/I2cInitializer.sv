@@ -5,7 +5,8 @@ module I2CInitializer(
     output logic	o_finished,
     output logic	o_sclk,
     output logic 	o_sdat,
-    output logic	o_oen
+    output logic	o_oen,
+	output logic [2:0] o_state
 );
 // 7b I2C addr, 1b R/W, 7b Reg addr, 9b Reg data
 localparam [239 : 0] REG_CONFIG = {
@@ -27,6 +28,8 @@ localparam S_DATA = 2;
 localparam S_ACK = 3;
 localparam S_STOP = 4;
 localparam S_RESTART = 5;
+
+assign o_state = state;
 
 logic [2:0]       		 state, state_nxt;
 logic [239:0] 		     data, data_nxt;

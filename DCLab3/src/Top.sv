@@ -25,7 +25,11 @@ module Top (
 	inout  i_AUD_ADCLRCK,
 	inout  i_AUD_BCLK,
 	inout  i_AUD_DACLRCK,
-	output o_AUD_DACDAT
+	output o_AUD_DACDAT,
+
+	output logic[2:0] o_state_num,
+	output o_state_I2C,
+	output o_i2c_start
 
 	// SEVENDECODER (optional display)
 	// output [5:0] o_record_time,
@@ -52,6 +56,9 @@ parameter S_RECD       = 2;
 parameter S_RECD_PAUSE = 3;
 parameter S_PLAY       = 4;
 parameter S_PLAY_PAUSE = 5;
+assign o_state_num = state_r;
+assign o_i2c_fin = i2c_fin;
+assign o_i2c_start = i2c_start;
 
 logic i2c_oen, i2c_sdat, i2c_start, i2c_fin, i2c_start_next,i2c_sent,i2c_sent_next,rec_start,rec_start_next,rec_stop,rec_stop_next,rec_pause,rec_pause_next, play_en,play_en_next, dsp_start, dsp_start_next, dsp_pause, dsp_pause_next, dsp_stop, dsp_stop_next;
 logic [19:0] addr_record, addr_play;
@@ -76,12 +83,13 @@ assign o_SRAM_UB_N = 1'b0;
 // sequentially sent out settings to initialize WM8731 with I2C protocal
 I2CInitializer init0(
 	.i_rst_n(i_rst_n),
-	.i_clk(i_clk_100K),
+	.i_clk(i_clk_100k),
 	.i_start(i2c_start),
 	.o_finished(i2c_fin),
 	.o_sclk(o_I2C_SCLK),
 	.o_sdat(i2c_sdat),
-	.o_oen(i2c_oen) // you are outputing (you are not outputing only when you are "ack"ing.)
+	.o_oen(i2c_oen), // you are outputing (you are not outputing only when you are "ack"ing.)
+	.o_state(o_state_I2C)
 );
 
 // === AudDSP ===
@@ -142,21 +150,23 @@ always_comb begin
 	dsp_stop_next=dsp_stop;
 	case (state_r)
 		S_I2C: begin
-			if(i2c_start==1'b0 && i2c_sent==1'b0) begin
-				i2c_start_next=1'b1;
-				i2c_sent_next=1'b1;
-			end
-			else if(i2c_start==1'b1) begin
-				i2c_start_next=1'b0;
+			// if(i2c_start==1'b0 && i2c_sent==1'b0) begin
+			// 	i2c_start_next=1'b1;
+			// 	i2c_sent_next=1'b1;
+			// end
+			// else if(i2c_start==1'b1) begin
+			// 	i2c_start_next=1'b0;
+			// end
+
+			i2c_start_next=1'b1;
+			
+			if (i2c_fin==1'b1) begin
+				state_w=S_IDLE;
 			end
 			else begin
-				if (i2c_fin==1'b1) begin
-					state_w=S_IDLE;
-				end
-				else begin
-					state_w=S_I2C;
-				end
+				state_w=S_I2C;
 			end
+			
 		end
 		S_IDLE: begin
 			rec_stop_next=1'b0;
@@ -237,8 +247,8 @@ always_comb begin
 	endcase
 end
 
-always_ff @(posedge i_AUD_BCLK or negedge i_rst_n) begin
-	if (!i_rst_n) begin
+always_ff @(posedge i_clk or negedge i_rst_n) begin
+	if (~i_rst_n) begin
 		state_r <= S_I2C;
 		i2c_start<=1'b0;
 		i2c_sent<=1'b0;
