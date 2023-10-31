@@ -1,9 +1,9 @@
 module Top (
 	input i_rst_n,
 	input i_clk,
-	input i_key_0,
-	input i_key_1,
-	input i_key_2,
+	input i_key_0,          // key 0: record
+	input i_key_1,			// key 1: play
+	input i_key_2,			// key 2: stop
 	// input [3:0] i_speed, // design how user can decide mode on your own
 	
 	// AudDSP and SRAM
@@ -53,10 +53,10 @@ parameter S_RECD_PAUSE = 3;
 parameter S_PLAY       = 4;
 parameter S_PLAY_PAUSE = 5;
 
-logic i2c_oen, i2c_sdat;
+logic i2c_oen, i2c_sdat, i2c_start, i2c_fin, i2c_start_next,i2c_sent,i2c_sent_next,rec_start,rec_start_next,rec_stop,rec_stop_next,rec_pause,rec_pause_next, play_en,play_en_next;
 logic [19:0] addr_record, addr_play;
 logic [15:0] data_record, data_play, dac_data;
-
+logic [2:0] state_r, state_w;
 assign io_I2C_SDAT = (i2c_oen) ? i2c_sdat : 1'bz;
 
 assign o_SRAM_ADDR = (state_r == S_RECD) ? addr_record : addr_play[19:0];
@@ -77,8 +77,8 @@ assign o_SRAM_UB_N = 1'b0;
 I2cInitializer init0(
 	.i_rst_n(i_rst_n),
 	.i_clk(i_clk_100K),
-	.i_start(),
-	.o_finished(),
+	.i_start(i2c_start),
+	.o_finished(i2c_fin),
 	.o_sclk(o_I2C_SCLK),
 	.o_sdat(i2c_sdat),
 	.o_oen(i2c_oen) // you are outputing (you are not outputing only when you are "ack"ing.)
@@ -120,9 +120,9 @@ AudRecorder recorder0(
 	.i_rst_n(i_rst_n), 
 	.i_clk(i_AUD_BCLK),
 	.i_lrc(i_AUD_ADCLRCK),
-	.i_start(),
-	.i_pause(),
-	.i_stop(),
+	.i_start(rec_start),
+	.i_pause(rec_pause),
+	.i_stop(rec_stop),
 	.i_data(i_AUD_ADCDAT),
 	.o_address(addr_record),
 	.o_data(data_record),
@@ -130,14 +130,122 @@ AudRecorder recorder0(
 
 always_comb begin
 	// design your control here
+	state_w=state_r;
+	i2c_start_next=i2c_start;
+	i2c_sent_next=i2c_sent;
+	rec_start_next=rec_start;
+	rec_stop_next=rec_stop;
+	rec_pause_next=rec_pause;
+	play_en_next=play_en;
+	case (state_r)
+		S_I2C: begin
+			if(i2c_start==1'b0 && i2c_sent==1'b0) begin
+				i2c_start_next=1'b1;
+				i2c_sent_next=1'b1;
+			end
+			else if(i2c_start==1'b1) begin
+				i2c_start_next=1'b0;
+			end
+			else begin
+				if (i2c_fin==1'b1) begin
+					state_w=S_IDLE;
+				end
+				else begin
+					state_w=S_I2C;
+				end
+			end
+		end
+		S_IDLE: begin
+			rec_stop_next=1'b0;
+			if(i_key_0==1'b1) begin
+				state_w=S_RECD;
+				rec_start_next=1'b1;
+			end
+			else if(i_key_1==1'b1) begin
+				state_w=S_PLAY;
+				play_en_next=1'b1;
+			end
+			else begin
+				state_w=S_IDLE;
+			end
+		end
+		S_RECD: begin
+			rec_start_next=1'b0;
+			if(i_key_2 ==1'b1)begin
+				state_w=S_IDLE;
+			end
+			else if(i_key_0==1'b1) begin
+				state_w=S_RECD_PAUSE;
+				rec_pause_next=1'b1;
+			end
+			else begin
+				state_w=S_RECD;
+			end
+		end
+		S_RECD_PAUSE: begin
+			rec_pause_next=1'b0;
+			if(i_key_2) begin
+				state_w=S_IDLE;
+				rec_stop_next=1'b1;
+			end
+			else if(i_key_0) begin
+				state_w=S_RECD;
+				rec_start_next=1'b1;
+			end
+			else begin
+				state_w=S_RECD_PAUSE;
+			end
+		end
+		S_PLAY: begin
+			if(i_key_2==1'b1) begin
+				state_w=S_IDLE;
+				play_en_next=1'b0;
+			end
+			else if(i_key_1==1'b1) begin
+				state_w=S_PLAY_PAUSE;
+				play_en_next=1'b0;
+			end
+			else begin
+				state_w=S_PLAY;
+
+			end
+		end
+		S_PLAY_PAUSE: begin
+			if(i_key_2==1'b1) begin
+				state_w=S_IDLE;
+				play_en_next=1'b0;
+			end
+			else if(i_key_1==1'b1) begin
+				state_w=S_PLAY;
+				play_en_next=1'b1;
+			end
+			else begin
+				state_w=S_PLAY_PAUSE;
+			end
+		end
+	endcase
 end
 
 always_ff @(posedge i_AUD_BCLK or posedge i_rst_n) begin
 	if (!i_rst_n) begin
-		
+		state_r <= S_I2C;
+		i2c_start<=1'b0;
+		i2c_sent<=1'b0;
+		//set rec signals
+		rec_start<=1'b0;
+		rec_stop<=1'b0;
+		rec_pause<=1'b0;
+		play_en<=1'b0;
 	end
 	else begin
-		
+		i2c_sent<=i2c_sent_next;
+		state_r <= state_w;
+		i2c_start<=i2c_start_next;
+		//set rec signals
+		rec_start<=rec_start_next;
+		rec_stop<=rec_stop_next;
+		rec_pause<=rec_pause_next;
+		play_en<=play_en_next;
 	end
 end
 
