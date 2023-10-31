@@ -17,8 +17,8 @@ module AudDSP(
 );
 
     localparam S_IDLE = 2'd0;
-    localparam S_play = 2'd1;
-    localparam S_pause = 2'd2;
+    localparam S_PLAY = 2'd1;
+    localparam S_PAUSE = 2'd2;
 
     logic [1:0] state, state_next;
     logic [19:0] sram_addr_r,sram_addr_w;
@@ -33,27 +33,27 @@ always_comb begin
     case(state)
         S_IDLE: begin
             if(i_start) begin
-                state_next = S_play;
+                state_next = S_PLAY;
             end
             else begin
                 state_next = S_IDLE;
             end
         end
-        S_play: begin
+        S_PLAY: begin
             if(i_stop || (sram_addr_r >= i_stop_addr)) begin
                 state_next = S_IDLE;
             end
             else if(i_pause) begin
-                state_next = S_pause;
+                state_next = S_PAUSE;
             end
             
         end
-        S_pause begin
+        S_PAUSE: begin
             if(i_stop) begin
                 state_next = S_IDLE;
             end
             else if(i_start) begin
-                state_next = S_play;
+                state_next = S_PLAY;
             end
         end
     endcase

@@ -56,7 +56,7 @@ always_comb begin
         end
         WAITING: begin
             data_w=15'b0;
-            if(i_stop) begin
+            if(i_stop ||o_address==20'b1) begin
                 state_next = STOPPED;
             end
             else if(i_pause) begin
@@ -64,20 +64,14 @@ always_comb begin
             end
             else begin
                 if(lrc_p==1'b1 && i_lrc==1'b0) begin
-                    counter_next = 5'b0;
                     if(first && o_address==20'b0)begin
                         first_next=1'b0;
-                        state_next = RECORDING;
                     end
                     else begin
-                        if(o_address==20'b1) begin
-                            state_next=STOPPED;
-                        end
-                        else begin
-                            addr_next=o_address+1;
-                            state_next=RECORDING;
-                        end
+                        addr_next=o_address+1;
                     end
+                    counter_next = 5'b0;
+                    state_next=RECORDING;
                 end
                 else begin
                     state_next=WAITING;
