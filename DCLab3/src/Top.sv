@@ -125,7 +125,7 @@ AudRecorder recorder0(
 	.i_stop(rec_stop),
 	.i_data(i_AUD_ADCDAT),
 	.o_address(addr_record),
-	.o_data(data_record),
+	.o_data(data_record)
 );
 
 always_comb begin
