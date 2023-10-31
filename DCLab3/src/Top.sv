@@ -74,7 +74,7 @@ assign o_SRAM_UB_N = 1'b0;
 
 // === I2cInitializer ===
 // sequentially sent out settings to initialize WM8731 with I2C protocal
-I2cInitializer init0(
+I2CInitializer init0(
 	.i_rst_n(i_rst_n),
 	.i_clk(i_clk_100K),
 	.i_start(i2c_start),
@@ -237,7 +237,7 @@ always_comb begin
 	endcase
 end
 
-always_ff @(posedge i_AUD_BCLK or posedge i_rst_n) begin
+always_ff @(posedge i_AUD_BCLK or negedge i_rst_n) begin
 	if (!i_rst_n) begin
 		state_r <= S_I2C;
 		i2c_start<=1'b0;

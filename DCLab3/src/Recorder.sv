@@ -14,7 +14,7 @@ parameter PAUSE= 1;
 parameter RECORDING = 2;
 parameter WAITING =3;
 logic [19:0] addr_next;
-logic [15:0] o_data_next,data_w;
+logic [15:0] o_data_next,data_w,data_r;
 logic [4:0] counter,counter_next;
 logic [1:0] state,state_next;
 logic first,first_next;
@@ -28,6 +28,7 @@ always_comb begin
     state_next=state;
     counter_next=counter;
     first_next=first;
+    data_w=data_r;
     case(state)
         STOPPED: begin
             data_w=15'b0;
@@ -103,7 +104,7 @@ always_comb begin
 end
 
 
-always_ff @(posedge i_clk or posedge i_rst_n) begin
+always_ff @(posedge i_clk or negedge i_rst_n) begin
 	if (!i_rst_n) begin
 		o_address <=0;
         o_data <=0;
@@ -111,8 +112,10 @@ always_ff @(posedge i_clk or posedge i_rst_n) begin
         state <= STOPPED;
         counter<=1'b0;
         first<=1'b1;
+        data_r<=0;
 	end
 	else begin
+        data_r<=data_w;
 		o_address <= addr_next;
         o_data <= o_data_next;
         lrc_p <= i_lrc;
