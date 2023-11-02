@@ -207,6 +207,8 @@ Top top0(
 	.o_state_RECD(rec_display),
 	.o_state_PLAY(play_display),
 	.o_state_DSP(dsp_display)
+	.l_bclk(LEDG[0]),
+	.l_lrck(LEDG[1]),
 
 	// SEVENDECODER (optional display)
 	// .o_record_time(recd_time),

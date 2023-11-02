@@ -32,7 +32,9 @@ module Top (
 	output logic[2:0] o_state_RECD,
 	output logic[2:0] o_state_DSP,
 	output logic[2:0] o_state_PLAY,
-	output o_i2c_oen
+	output o_i2c_oen,
+	output l_bclk,
+	output l_clk_a_bclk
 
 	// SEVENDECODER (optional display)
 	// output [5:0] o_record_time,

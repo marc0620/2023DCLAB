@@ -22,7 +22,7 @@ logic [1:0] state,state_next;
 logic first,first_next;
 logic lrc_p;
 
-assign o_state=state;
+assign o_state=state_next;
 
 always_comb begin
     o_data_next=o_data;
