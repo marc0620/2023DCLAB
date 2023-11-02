@@ -80,10 +80,10 @@ always_comb begin
     o_fin_next=o_fin;
     case(state)
         S_IDLE: begin
+            o_fin_next=0;
             if(i_start) begin
                 dac_data_w = i_sram_data;
                 sram_addr_w = 20'b0;
-                o_fin_next=0;
             end
         end
         S_PLAY: begin

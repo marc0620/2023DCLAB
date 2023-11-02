@@ -248,7 +248,7 @@ always_comb begin
 			end
 		end
 		S_PLAY: begin
-			if(i_key_2==1'b1) begin
+			if(i_key_2==1'b1 || play_fin) begin
 				state_w=S_IDLE;
 				dsp_stop_next=1'b1;
 				play_en_next=1'b0;
@@ -265,7 +265,7 @@ always_comb begin
 			end
 		end
 		S_PLAY_PAUSE: begin
-			if(i_key_2==1'b1 || play_fin) begin
+			if(i_key_2==1'b1) begin
 				state_w=S_IDLE;
 				dsp_stop_next=1'b1;
 				play_en_next=1'b0;
