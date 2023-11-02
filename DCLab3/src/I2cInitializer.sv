@@ -2,6 +2,7 @@ module I2CInitializer(
     input  	i_rst_n,
     input  	i_clk,
     input  	i_start,
+	input	i2c_sdat,
     output logic	o_finished,
     output logic	o_sclk,
     output logic 	o_sdat,
@@ -98,6 +99,7 @@ always_comb begin
 			o_oen = 1'b0;
 			o_sclk = ~i_clk;
 			// Anyway, we just assume the transmissoin is reliable
+			
 			if(byte_count == 2) begin
 				state_nxt = S_STOP;
 				byte_count_nxt = 0;
@@ -110,11 +112,11 @@ always_comb begin
 			end
 		end 
 		S_STOP: begin
+			
 			if(reg_count == 9) begin
 				state_nxt = S_IDLE;
 				reg_count_nxt = 0;
 				o_finished = 1'b1;
-				
 			end
 			else begin
 				state_nxt = S_RESTART;	
@@ -125,11 +127,6 @@ always_comb begin
 	
 		end 
 		S_RESTART: begin
-			state_nxt = S_RESTART2;
-			o_sclk = 1;
-			o_sdat = 1;
-		end 
-		S_RESTART2: begin
 			state_nxt = S_START;
 			o_sclk = 1;
 			o_sdat = 1;
