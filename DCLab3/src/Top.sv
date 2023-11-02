@@ -190,76 +190,87 @@ always_comb begin
 			
 		end
 		S_IDLE: begin
-			rec_stop_next=1'b0;
-			dsp_stop_next=1'b0;
 			if(i_key_0==1'b1) begin
 				state_w=S_RECD;
 				rec_start_next=1'b1;
+				rec_stop_next=1'b0;
+				dsp_stop_next=1'b0;
 			end
 			else if(i_key_1==1'b1) begin
 				state_w=S_PLAY;
 				play_en_next=1'b1;
 				dsp_start_next=1'b1;
+				rec_stop_next=1'b0;
+				dsp_stop_next=1'b0;
 			end
 			else begin
 				state_w=S_IDLE;
 			end
 		end
 		S_RECD: begin
-			rec_start_next=1'b0;
 			if(i_key_2 ==1'b1)begin
 				state_w=S_IDLE;
 				rec_stop_next=1'b1;
+				rec_start_next=1'b0;
+
 			end
 			else if(i_key_0==1'b1) begin
 				state_w=S_RECD_PAUSE;
 				rec_pause_next=1'b1;
+				rec_start_next=1'b0;
+
 			end
 			else begin
 				state_w=S_RECD;
 			end
 		end
 		S_RECD_PAUSE: begin
-			rec_pause_next=1'b0;
 			if(i_key_2) begin
 				state_w=S_IDLE;
 				rec_stop_next=1'b1;
+				rec_pause_next=1'b0;
+
 			end
 			else if(i_key_0) begin
 				state_w=S_RECD;
 				rec_start_next=1'b1;
+				rec_pause_next=1'b0;
+
 			end
 			else begin
 				state_w=S_RECD_PAUSE;
 			end
 		end
 		S_PLAY: begin
-			dsp_start_next=1'b0;
+			
 			if(i_key_2==1'b1) begin
 				state_w=S_IDLE;
 				dsp_stop_next=1'b1;
 				play_en_next=1'b0;
+				dsp_start_next=1'b0;
 			end
 			else if(i_key_1==1'b1) begin
 				dsp_pause_next=1'b1;
 				state_w=S_PLAY_PAUSE;
 				play_en_next=1'b0;
+				dsp_start_next=1'b0;
 			end
 			else begin
 				state_w=S_PLAY;
 			end
 		end
 		S_PLAY_PAUSE: begin
-			dsp_pause_next=1'b0;
 			if(i_key_2==1'b1) begin
 				state_w=S_IDLE;
 				dsp_stop_next=1'b1;
 				play_en_next=1'b0;
+				dsp_pause_next=1'b0;
 			end
 			else if(i_key_1==1'b1) begin
 				dsp_start_next=1'b1;
 				state_w=S_PLAY;
 				play_en_next=1'b1;
+				dsp_pause_next=1'b0;
 			end
 			else begin
 				state_w=S_PLAY_PAUSE;

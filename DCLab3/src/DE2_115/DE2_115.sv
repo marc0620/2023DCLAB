@@ -139,6 +139,10 @@ module DE2_115 (
 logic key0down, key1down, key2down, key3down;
 logic CLK_12M, CLK_100K, CLK_800K;
 
+assign GPIO[7] = CLK_100K;
+assign GPIO[8] = I2C_SCLK;
+assign GPIO[9] = I2C_SDAT;
+
 assign AUD_XCK = CLK_12M;
 
 myPll pll0( // generate with qsys, please follow lab2 tutorials
@@ -154,21 +158,21 @@ myPll pll0( // generate with qsys, please follow lab2 tutorials
 Debounce deb0(
 	.i_in(KEY[0]), // Record/Pause
 	.i_rst_n(KEY[3]),
-	.i_clk(CLK_12M),
+	.i_clk(AUD_BCLK),
 	.o_neg(key0down) 
 );
 
 Debounce deb1(
 	.i_in(KEY[1]), // Play/Pause
 	.i_rst_n(KEY[3]),
-	.i_clk(CLK_12M),
+	.i_clk(AUD_BCLK),
 	.o_neg(key1down) 
 );
 
 Debounce deb2(
 	.i_in(KEY[2]), // Stop
 	.i_rst_n(KEY[3]),
-	.i_clk(CLK_12M),
+	.i_clk(AUD_BCLK),
 	.o_neg(key2down) 
 );
 
@@ -251,22 +255,22 @@ end
 
 
 SevenHexDecoder seven_dec0(
-	// .i_hex(rec_display),
-	.i_hex(state_display),
+	.i_hex(rec_display),
+	// .i_hex(state_display),
 	.o_seven_ten(HEX1),
 	.o_seven_one(HEX0)
 );
 
 SevenHexDecoder seven_dec1(
-	// .i_hex(dsp_display),
-	.i_hex(I2C_display),
+	.i_hex(dsp_display),
+	// .i_hex(I2C_display),
 	.o_seven_ten(HEX5),
  	.o_seven_one(HEX4)
 );
 
 SevenHexDecoder seven_dec2(
-	// .i_hex(play_display),
-	.i_hex(ACKcount),
+	.i_hex(play_display),
+	// .i_hex(ACKcount),
 	.o_seven_ten(HEX7),
  	.o_seven_one(HEX6)
 );
