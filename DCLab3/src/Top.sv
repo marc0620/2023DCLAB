@@ -28,7 +28,7 @@ module Top (
 	output o_AUD_DACDAT,
 
 	output logic[2:0] o_state_num,
-	output logic[2:0] o_state_I2C,
+	output logic[2:0] o_state_num_nxt,
 	output logic[2:0] o_state_RECD,
 	output logic[2:0] o_state_DSP,
 	output logic[2:0] o_state_PLAY,
@@ -62,6 +62,7 @@ parameter S_RECD_PAUSE = 3;
 parameter S_PLAY       = 4;
 parameter S_PLAY_PAUSE = 5;
 assign o_state_num = state_r;
+assign o_state_num_nxt = state_w;
 assign o_i2c_fin = i2c_fin;
 assign o_i2c_start = i2c_start;
 assign l_bclk = i_AUD_BCLK;
@@ -267,7 +268,7 @@ always_comb begin
 	endcase
 end
 
-always_ff @(posedge i_clk or negedge i_rst_n) begin
+always_ff @(posedge i_AUD_BCLK or negedge i_rst_n) begin
 	if (~i_rst_n) begin
 		state_r <= S_I2C;
 		i2c_start<=1'b0;
