@@ -7,7 +7,9 @@ module AudRecorder(
 	input i_stop,
 	input i_data,
 	output reg[19:0] o_address,
-	output reg[15:0] o_data
+	output reg[15:0] o_data,
+    output [2:0] o_state
+
 );
 parameter STOPPED = 0;
 parameter PAUSE= 1;
@@ -20,7 +22,7 @@ logic [1:0] state,state_next;
 logic first,first_next;
 logic lrc_p;
 
-
+assign o_state=state;
 
 always_comb begin
     o_data_next=o_data;

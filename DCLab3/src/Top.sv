@@ -29,6 +29,9 @@ module Top (
 
 	output logic[2:0] o_state_num,
 	output logic[2:0] o_state_I2C,
+	output logic[2:0] o_state_RECD,
+	output logic[2:0] o_state_DSP,
+	output logic[2:0] o_state_PLAY,
 	output o_i2c_oen
 
 	// SEVENDECODER (optional display)
@@ -112,7 +115,8 @@ AudDSP dsp0(
 	.i_daclrck(i_AUD_DACLRCK),
 	.i_sram_data(data_play),
 	.o_dac_data(dac_data),
-	.o_sram_addr(addr_play)
+	.o_sram_addr(addr_play),
+	.o_state(o_state_DSP)
 );
 
 // === AudPlayer ===
@@ -123,7 +127,8 @@ AudPlayer player0(
 	.i_daclrck(i_AUD_DACLRCK),
 	.i_en(play_en), // enable AudPlayer only when playing audio, work with AudDSP
 	.i_dac_data(dac_data), //dac_data
-	.o_aud_dacdat(o_AUD_DACDAT)
+	.o_aud_dacdat(o_AUD_DACDAT),
+	.o_state(o_state_PLAY)
 );
 
 // === AudRecorder ===
@@ -137,7 +142,8 @@ AudRecorder recorder0(
 	.i_stop(rec_stop),
 	.i_data(i_AUD_ADCDAT),
 	.o_address(addr_record),
-	.o_data(data_record)
+	.o_data(data_record),
+	.o_state(o_state_RECD)
 );
 
 always_comb begin

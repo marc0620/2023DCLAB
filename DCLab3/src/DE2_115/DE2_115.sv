@@ -203,8 +203,10 @@ Top top0(
 
 	.o_state_num(state_display),
 	.o_state_I2C(I2C_display),
-	.o_i2c_oen(o_i2c_oen)
-
+	.o_i2c_oen(o_i2c_oen),
+	.o_state_RECD(rec_display),
+	.o_state_PLAY(play_display),
+	.o_state_DSP(dsp_display)
 
 	// SEVENDECODER (optional display)
 	// .o_record_time(recd_time),
@@ -227,6 +229,7 @@ Top top0(
 logic [2:0] state_display;
 logic [2:0] I2C_display;
 logic [6:0] ACKcount;
+logic [2:0] rec_display, play_display, dsp_display;
 logic o_i2c_oen;
 
 always_ff @(posedge I2C_SCLK or negedge KEY[3]) begin
@@ -246,19 +249,19 @@ end
 
 
 SevenHexDecoder seven_dec0(
-	.i_hex(state_display),
+	.i_hex(rec_display),
 	.o_seven_ten(HEX1),
 	.o_seven_one(HEX0)
 );
 
 SevenHexDecoder seven_dec1(
-	.i_hex(I2C_display),
+	.i_hex(dsp_display),
 	.o_seven_ten(HEX5),
  	.o_seven_one(HEX4)
 );
 
 SevenHexDecoder seven_dec2(
-	.i_hex(ACKcount),
+	.i_hex(play_display),
 	.o_seven_ten(HEX7),
  	.o_seven_one(HEX6)
 );
