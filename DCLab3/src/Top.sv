@@ -64,7 +64,8 @@ parameter S_PLAY_PAUSE = 5;
 assign o_state_num = state_r;
 assign o_i2c_fin = i2c_fin;
 assign o_i2c_start = i2c_start;
-
+assign l_bclk = i_AUD_BCLK;
+assign l_clk_a_bclk = i_AUD_BCLK & i_clk;
 logic [10:0] cntr2048, cntr2048_nxt;
 logic i2c_oen, i2c_sdat, i2c_start, i2c_fin, i2c_start_next,i2c_sent,i2c_sent_next,rec_start,rec_start_next,rec_stop,rec_stop_next,rec_pause,rec_pause_next, play_en,play_en_next, dsp_start, dsp_start_next, dsp_pause, dsp_pause_next, dsp_stop, dsp_stop_next;
 logic [19:0] addr_record, addr_play;
