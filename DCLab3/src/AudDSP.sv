@@ -13,7 +13,7 @@ module AudDSP(
 	input [19:0] i_stop_addr,
 	output [15:0]o_dac_data,  // dac_data_r
 	output [19:0]o_sram_addr,  // addr_play
-    output [1:0] o_state
+    output [2:0] o_state
 );
 
     localparam S_IDLE = 2'd0;
