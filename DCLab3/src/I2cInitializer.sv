@@ -2,7 +2,7 @@ module I2CInitializer(
     input  	i_rst_n,
     input  	i_clk,
     input  	i_start,
-	input	i2c_sdat,
+	input	i_sdat,
     output logic	o_finished,
     output logic	o_sclk,
     output logic 	o_sdat,
