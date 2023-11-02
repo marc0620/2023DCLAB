@@ -33,7 +33,7 @@ module Top (
 	output logic[2:0] o_state_DSP,
 	output logic[2:0] o_state_PLAY,
 	output o_i2c_oen,
-	output l_bclk,
+	output reg l_bclk,
 	output l_clk_a_bclk
 
 	// SEVENDECODER (optional display)
@@ -55,6 +55,7 @@ module Top (
 );
 
 // design the FSM and states as you like
+logic l_bclk_next;
 parameter S_IDLE       = 0;
 parameter S_I2C        = 1;
 parameter S_RECD       = 2;
@@ -62,16 +63,17 @@ parameter S_RECD_PAUSE = 3;
 parameter S_PLAY       = 4;
 parameter S_PLAY_PAUSE = 5;
 assign o_state_num = state_r;
-assign o_state_num_nxt = state_w;
+logic [2:0] o_state_I2C;
+assign o_state_num_nxt = o_state_I2C;//state_w;
 assign o_i2c_fin = i2c_fin;
 assign o_i2c_start = i2c_start;
-assign l_bclk = i_AUD_BCLK;
 assign l_clk_a_bclk = i_AUD_BCLK & i_clk;
 logic [10:0] cntr2048, cntr2048_nxt;
 logic i2c_oen, i2c_sdat, i2c_start, i2c_fin, i2c_start_next,i2c_sent,i2c_sent_next,rec_start,rec_start_next,rec_stop,rec_stop_next,rec_pause,rec_pause_next, play_en,play_en_next, dsp_start, dsp_start_next, dsp_pause, dsp_pause_next, dsp_stop, dsp_stop_next;
 logic [19:0] addr_record, addr_play;
 logic [15:0] data_record, data_play, dac_data;
 logic [2:0] state_r, state_w;
+logic rec_fin, play_fin;
 assign io_I2C_SDAT = (i2c_oen) ? i2c_sdat : 1'bz;
 assign o_i2c_oen = i2c_oen;
 
@@ -119,9 +121,11 @@ AudDSP dsp0(
 	.i_slow_1(), // linear interpolation
 	.i_daclrck(i_AUD_DACLRCK),
 	.i_sram_data(data_play),
+	.i_stop_addr(addr_record),
 	.o_dac_data(dac_data),
 	.o_sram_addr(addr_play),
-	.o_state(o_state_DSP)
+	.o_state(o_state_DSP),
+	.o_fin(play_fin)
 );
 
 // === AudPlayer ===
@@ -148,7 +152,8 @@ AudRecorder recorder0(
 	.i_data(i_AUD_ADCDAT),
 	.o_address(addr_record),
 	.o_data(data_record),
-	.o_state(o_state_RECD)
+	.o_state(o_state_RECD),
+	.o_fin(rec_fin)
 );
 
 always_comb begin
@@ -164,6 +169,7 @@ always_comb begin
 	dsp_pause_next=dsp_pause;
 	dsp_stop_next=dsp_stop;
 	cntr2048_nxt = cntr2048;
+	l_bclk_next=play_fin;
 	case (state_r)
 		S_I2C: begin
 			// if(i2c_start==1'b0 && i2c_sent==1'b0) begin
@@ -209,11 +215,10 @@ always_comb begin
 			end
 		end
 		S_RECD: begin
-			if(i_key_2 ==1'b1)begin
+			if(i_key_2 ==1'b1 || rec_fin==1)begin  //(o_state_RECD==0 && wait_sub==7) 
 				state_w=S_IDLE;
 				rec_stop_next=1'b1;
 				rec_start_next=1'b0;
-
 			end
 			else if(i_key_0==1'b1) begin
 				state_w=S_RECD_PAUSE;
@@ -243,7 +248,6 @@ always_comb begin
 			end
 		end
 		S_PLAY: begin
-			
 			if(i_key_2==1'b1) begin
 				state_w=S_IDLE;
 				dsp_stop_next=1'b1;
@@ -261,7 +265,7 @@ always_comb begin
 			end
 		end
 		S_PLAY_PAUSE: begin
-			if(i_key_2==1'b1) begin
+			if(i_key_2==1'b1 || play_fin) begin
 				state_w=S_IDLE;
 				dsp_stop_next=1'b1;
 				play_en_next=1'b0;
@@ -294,8 +298,10 @@ always_ff @(posedge i_AUD_BCLK or negedge i_rst_n) begin
 		dsp_pause<=1'b0;
 		dsp_stop<=1'b0;
 		cntr2048 <= 0;
+		l_bclk<=0;
 	end
 	else begin
+		l_bclk<=l_bclk_next;
 		i2c_sent<=i2c_sent_next;
 		state_r <= state_w;
 		i2c_start<=i2c_start_next;

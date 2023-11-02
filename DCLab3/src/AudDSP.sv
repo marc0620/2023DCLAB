@@ -13,7 +13,8 @@ module AudDSP(
 	input [19:0] i_stop_addr,
 	output [15:0]o_dac_data,  // dac_data_r
 	output [19:0]o_sram_addr,  // addr_play
-    output [2:0] o_state
+    output [2:0] o_state,
+    output reg o_fin
 );
 
     localparam S_IDLE = 2'd0;
@@ -25,7 +26,7 @@ module AudDSP(
     logic signed [15:0] dac_data_r,dac_data_w;
     logic signed [15:0] previous_data_r, previous_data_w;
     logic previous_daclrck_r, previous_daclrck_w;
-
+    logic o_fin_next;
     assign o_sram_addr = sram_addr_r;
     assign o_dac_data = dac_data_r;
     assign o_state = state;
@@ -76,20 +77,23 @@ always_comb begin
     dac_data_w = dac_data_r;
     sram_addr_w = sram_addr_r;
     previous_data_w = previous_data_r;
+    o_fin_next=o_fin;
     case(state)
         S_IDLE: begin
             if(i_start) begin
                 dac_data_w = i_sram_data;
                 sram_addr_w = 20'b0;
+                o_fin_next=0;
             end
         end
         S_PLAY: begin
             if(i_stop || (sram_addr_r >= i_stop_addr)) begin
-                dac_data_w = 16'b0;
+                dac_data_w = 16'bz;
                 sram_addr_w = 20'b0;
+                o_fin_next=1;
             end
             else if(i_pause) begin
-                dac_data_w = 16'b0;
+                dac_data_w = 16'bz;
                 sram_addr_w = sram_addr_r;
             end
             else begin
@@ -115,15 +119,17 @@ end
 always_ff @(posedge i_clk or negedge i_rst_n) begin
     if(!i_rst_n) begin
         sram_addr_r <= 20'b0;
-        dac_data_r <= 16'b0;
+        dac_data_r <= 16'bz;
         previous_data_r <= 16'b0;
         previous_daclrck_r <= 0;
+        o_fin<=0;
     end
     else begin
         sram_addr_r <= sram_addr_w;
         dac_data_r <= dac_data_w;
         previous_data_r <= previous_data_w;
         previous_daclrck_r <= previous_daclrck_w;
+        o_fin<=o_fin_next;
     end
 end
 

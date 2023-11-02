@@ -8,7 +8,8 @@ module AudRecorder(
 	input i_data,
 	output reg[19:0] o_address,
 	output reg[15:0] o_data,
-    output [2:0] o_state
+    output [2:0] o_state,
+    output reg o_fin
 
 );
 parameter STOPPED = 0;
@@ -19,10 +20,10 @@ logic [19:0] addr_next;
 logic [15:0] o_data_next,data_w,data_r;
 logic [4:0] counter,counter_next;
 logic [1:0] state,state_next;
-logic first,first_next;
+logic first,first_next, o_fin_next;
 logic lrc_p;
 
-assign o_state=state_next;
+assign o_state=state;
 
 always_comb begin
     o_data_next=o_data;
@@ -31,10 +32,12 @@ always_comb begin
     counter_next=counter;
     first_next=first;
     data_w=data_r;
+    o_fin_next=o_fin;
     case(state)
         STOPPED: begin
             data_w=15'b0;
             first_next=1'b1;
+            o_fin_next=0;
             if(i_start) begin
                 addr_next = 20'b0;
                 o_data_next = 16'b0;
@@ -59,7 +62,8 @@ always_comb begin
         end
         WAITING: begin
             data_w=15'b0;
-            if(i_stop ||o_address==20'b1) begin
+            if(i_stop || o_address=={20{1'b1}}) begin
+                o_fin_next=1;
                 state_next = STOPPED;
             end
             else if(i_pause) begin
@@ -115,6 +119,7 @@ always_ff @(posedge i_clk or negedge i_rst_n) begin
         counter<=1'b0;
         first<=1'b1;
         data_r<=0;
+        o_fin<=0;
 	end
 	else begin
         data_r<=data_w;
@@ -124,6 +129,7 @@ always_ff @(posedge i_clk or negedge i_rst_n) begin
         state <= state_next;
         counter<= counter_next;
         first<=first_next;
+        o_fin<=o_fin_next;
 	end
 end
 endmodule

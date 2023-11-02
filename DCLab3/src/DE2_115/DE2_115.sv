@@ -139,6 +139,8 @@ module DE2_115 (
 logic key0down, key1down, key2down, key3down;
 logic CLK_12M, CLK_100K, CLK_800K;
 
+assign GPIO[2] = o_i2c_oen;
+assign GPIO[5:3] = I2C_display;
 assign GPIO[7] = CLK_100K;
 assign GPIO[8] = I2C_SCLK;
 assign GPIO[9] = I2C_SDAT;
@@ -275,11 +277,19 @@ SevenHexDecoder seven_dec2(
  	.o_seven_one(HEX6)
 );
 
+SevenHexDecoder seven_dec3(
+	.i_hex(state_display),
+	// .i_hex(ACKcount),
+	.o_seven_ten(HEX3),
+ 	.o_seven_one(HEX2)
+);
+
+
 // comment those are use for display
 // assign HEX0 = '1;
 // assign HEX1 = '1;
-assign HEX2 = '1;
-assign HEX3 = '1;
+// assign HEX2 = '1;
+// assign HEX3 = '1;
 // assign HEX4 = '1;
 // assign HEX5 = '1;
 // assign HEX6 = '1;
