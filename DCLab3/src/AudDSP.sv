@@ -12,8 +12,8 @@ module AudDSP(
 	input [15:0]i_sram_data,  // data_play
 	input [19:0] i_stop_addr,
 	output [15:0]o_dac_data,  // dac_data_r
-	output [19:0]o_sram_addr  // addr_play
-
+	output [19:0]o_sram_addr,  // addr_play
+    output [1:0] o_state
 );
 
     localparam S_IDLE = 2'd0;
@@ -28,6 +28,7 @@ module AudDSP(
 
     assign o_sram_addr = sram_addr_r;
     assign o_dac_data = dac_data_r;
+    assign o_state = state;
 //fsm
 always_comb begin
     state_next = state;

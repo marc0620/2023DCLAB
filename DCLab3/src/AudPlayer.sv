@@ -4,7 +4,8 @@ module AudPlayer(
 	input i_daclrck, //inout?
 	input i_en, // enable AudPlayer only when playing audio, work with AudDSP
 	input signed [15:0] i_dac_data, //dac_data
-	output o_aud_dacdat
+	output o_aud_dacdat,
+    output o_state
 );
     localparam  player_IDLE =  2'd0;
     localparam  player_left =  2'd1;
@@ -16,7 +17,7 @@ module AudPlayer(
     logic o_data,o_data_next;
 
     assign o_aud_dacdat = o_data;
-
+    assign o_state = state;
     //fsm
     always_comb begin
         state_next = state;
