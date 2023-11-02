@@ -28,8 +28,8 @@ module Top (
 	output o_AUD_DACDAT,
 
 	output logic[2:0] o_state_num,
-	output o_state_I2C,
-	output o_i2c_start
+	output logic[2:0] o_state_I2C,
+	output o_i2c_oen
 
 	// SEVENDECODER (optional display)
 	// output [5:0] o_record_time,
@@ -60,11 +60,13 @@ assign o_state_num = state_r;
 assign o_i2c_fin = i2c_fin;
 assign o_i2c_start = i2c_start;
 
+logic [10:0] cntr2048, cntr2048_nxt;
 logic i2c_oen, i2c_sdat, i2c_start, i2c_fin, i2c_start_next,i2c_sent,i2c_sent_next,rec_start,rec_start_next,rec_stop,rec_stop_next,rec_pause,rec_pause_next, play_en,play_en_next, dsp_start, dsp_start_next, dsp_pause, dsp_pause_next, dsp_stop, dsp_stop_next;
 logic [19:0] addr_record, addr_play;
 logic [15:0] data_record, data_play, dac_data;
 logic [2:0] state_r, state_w;
 assign io_I2C_SDAT = (i2c_oen) ? i2c_sdat : 1'bz;
+assign o_i2c_oen = i2c_oen;
 
 assign o_SRAM_ADDR = (state_r == S_RECD) ? addr_record : addr_play[19:0];
 assign io_SRAM_DQ  = (state_r == S_RECD) ? data_record : 16'dz; // sram_dq as output
@@ -91,6 +93,8 @@ I2CInitializer init0(
 	.o_oen(i2c_oen), // you are outputing (you are not outputing only when you are "ack"ing.)
 	.o_state(o_state_I2C)
 );
+
+
 
 // === AudDSP ===
 // responsible for DSP operations including fast play and slow play at different speed
@@ -148,6 +152,7 @@ always_comb begin
 	dsp_start_next=dsp_start;
 	dsp_pause_next=dsp_pause;
 	dsp_stop_next=dsp_stop;
+	cntr2048_nxt = cntr2048;
 	case (state_r)
 		S_I2C: begin
 			// if(i2c_start==1'b0 && i2c_sent==1'b0) begin
@@ -157,8 +162,14 @@ always_comb begin
 			// else if(i2c_start==1'b1) begin
 			// 	i2c_start_next=1'b0;
 			// end
-
-			i2c_start_next=1'b1;
+			if(cntr2048 < 2047)begin
+				cntr2048_nxt = cntr2048 + 1;
+				i2c_start_next=1'b1;
+			end
+			else begin
+				i2c_start_next=1'b0;
+			end
+			
 			
 			if (i2c_fin==1'b1) begin
 				state_w=S_IDLE;
@@ -260,6 +271,7 @@ always_ff @(posedge i_clk or negedge i_rst_n) begin
 		dsp_start<=1'b0;
 		dsp_pause<=1'b0;
 		dsp_stop<=1'b0;
+		cntr2048 <= 0;
 	end
 	else begin
 		i2c_sent<=i2c_sent_next;
@@ -273,6 +285,7 @@ always_ff @(posedge i_clk or negedge i_rst_n) begin
 		dsp_start<=dsp_start_next;
 		dsp_pause<=dsp_pause_next;
 		dsp_stop<=dsp_stop_next;
+		cntr2048 <= cntr2048_nxt;
 
 	end
 end

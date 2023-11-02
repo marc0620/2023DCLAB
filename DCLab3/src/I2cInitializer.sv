@@ -6,7 +6,8 @@ module I2CInitializer(
     output logic	o_sclk,
     output logic 	o_sdat,
     output logic	o_oen,
-	output logic [2:0] o_state
+	output logic [2:0] o_state,
+	output logic [6:0] ACKcount
 );
 // 7b I2C addr, 1b R/W, 7b Reg addr, 9b Reg data
 localparam [239 : 0] REG_CONFIG = {
@@ -28,8 +29,8 @@ localparam S_DATA = 2;
 localparam S_ACK = 3;
 localparam S_STOP = 4;
 localparam S_RESTART = 5;
+localparam S_RESTART2 = 6;
 
-assign o_state = state;
 
 logic [2:0]       		 state, state_nxt;
 logic [239:0] 		     data, data_nxt;
@@ -41,6 +42,24 @@ logic [7:0]				 databus;
 
 
 assign databus = data[239: 232];
+assign o_state = state;
+
+
+
+always_ff @(negedge i_clk or negedge i_rst_n) begin
+	if(~i_rst_n) begin
+		ACKcount <= 0;
+	end
+	else begin
+		if((state==S_ACK))begin
+			ACKcount <= ACKcount+1;
+		end
+		else begin
+			ACKcount <= ACKcount;
+		end
+	end
+end
+
 
 always_comb begin
 	state_nxt = state;
@@ -106,6 +125,11 @@ always_comb begin
 	
 		end 
 		S_RESTART: begin
+			state_nxt = S_RESTART2;
+			o_sclk = 1;
+			o_sdat = 1;
+		end 
+		S_RESTART2: begin
 			state_nxt = S_START;
 			o_sclk = 1;
 			o_sdat = 1;

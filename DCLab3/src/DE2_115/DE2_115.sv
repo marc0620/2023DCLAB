@@ -150,19 +150,6 @@ myPll pll0( // generate with qsys, please follow lab2 tutorials
 );
 
 
-logic [15:0] slow_count;
-logic slow_clock;
-always_ff @(posedge CLK_100K or negedge KEY[3]) begin
-	if(~KEY[3]) begin
-		slow_count <= 0;
-	end 
-	else begin
-		slow_count <= slow_count + 1;
-	end
-end
-assign slow_clock = slow_count[15];
-assign LEDR[0] = slow_clock;
-
 // you can decide key down settings on your own, below is just an example
 Debounce deb0(
 	.i_in(KEY[0]), // Record/Pause
@@ -216,7 +203,8 @@ Top top0(
 
 	.o_state_num(state_display),
 	.o_state_I2C(I2C_display),
-	.o_i2c_start(LEDG[0])
+	.o_i2c_oen(o_i2c_oen)
+
 
 	// SEVENDECODER (optional display)
 	// .o_record_time(recd_time),
@@ -238,6 +226,24 @@ Top top0(
 
 logic [2:0] state_display;
 logic [2:0] I2C_display;
+logic [6:0] ACKcount;
+logic o_i2c_oen;
+
+always_ff @(posedge I2C_SCLK or negedge KEY[3]) begin
+	if(~KEY[3]) begin
+		ACKcount <= 0;
+	end
+	else begin
+		if(o_i2c_oen==0 && (I2C_SDAT))begin
+			ACKcount <= ACKcount+1;
+		end
+		else begin
+			ACKcount <= ACKcount;
+		end
+	end
+	
+end
+
 
 SevenHexDecoder seven_dec0(
 	.i_hex(state_display),
@@ -251,6 +257,12 @@ SevenHexDecoder seven_dec1(
  	.o_seven_one(HEX4)
 );
 
+SevenHexDecoder seven_dec2(
+	.i_hex(ACKcount),
+	.o_seven_ten(HEX7),
+ 	.o_seven_one(HEX6)
+);
+
 // comment those are use for display
 // assign HEX0 = '1;
 // assign HEX1 = '1;
@@ -258,8 +270,8 @@ assign HEX2 = '1;
 assign HEX3 = '1;
 // assign HEX4 = '1;
 // assign HEX5 = '1;
-assign HEX6 = '1;
-assign HEX7 = '1;
+// assign HEX6 = '1;
+// assign HEX7 = '1;
 
 
 
