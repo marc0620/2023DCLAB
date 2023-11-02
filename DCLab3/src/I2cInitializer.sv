@@ -127,7 +127,7 @@ always_comb begin
 	
 		end 
 		S_RESTART: begin
-			state_nxt = S_START;
+			state_nxt = i_sdat? S_START : state;
 			o_sclk = 1;
 			o_sdat = 1;
 		end 
