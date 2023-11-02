@@ -94,6 +94,7 @@ I2CInitializer init0(
 	.i_rst_n(i_rst_n),
 	.i_clk(i_clk_100k),
 	.i_start(i2c_start),
+	.i_sdat(i2c_sdat),
 	.o_finished(i2c_fin),
 	.o_sclk(o_I2C_SCLK),
 	.o_sdat(i2c_sdat),
