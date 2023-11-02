@@ -27,6 +27,7 @@ module AudDSP(
     logic signed [15:0] previous_data_r, previous_data_w;
     logic previous_daclrck_r, previous_daclrck_w;
     logic o_fin_next;
+    logic [3:0] count_w, count_r;
     assign o_sram_addr = sram_addr_r;
     assign o_dac_data = dac_data_r;
     assign o_state = state;
@@ -81,6 +82,7 @@ always_comb begin
     case(state)
         S_IDLE: begin
             o_fin_next=0;
+            count_w = 4'b0;
             if(i_start) begin
                 dac_data_w = i_sram_data;
                 sram_addr_w = 20'b0;
@@ -91,14 +93,27 @@ always_comb begin
                 dac_data_w = 16'bz;
                 sram_addr_w = 20'b0;
                 o_fin_next=1;
+                previous_daclrck_w =0;
             end
             else if(i_pause) begin
                 dac_data_w = 16'bz;
                 sram_addr_w = sram_addr_r;
+                previous_data_w = previous_daclrck_r;
             end
             else begin
-                // dac_data_w = i_sram_data;
-                dac_data_w = 16'b0100_0000_0000_0000;
+                if(i_slow_1) begin
+                    dac_data_w = ($signed(i_sram_data) * $signed(count_r) + previous_data_r * ($signed(i_speed + 1) - $signed(count_r)) ) / $signed(count_r);
+                    if (count_r > i_speed) begin
+                        count_w         = (previous_daclrck_r & !i_daclrck) ? 4'd1: count_r;
+                        sram_addr_w     = (previous_daclrck_r & !i_daclrck) ? sram_addr_r + 1 : sram_addr_r;
+                        previous_data_w = (!previous_daclrck_r & i_daclrck) ? $signed(i_sram_data) : previous_data_r;
+                    end
+                    else begin
+                        count_w =  (previous_daclrck_r & !i_daclrck) ? count_r + 1: count_r;
+                    end
+                end
+                //normal
+                dac_data_w = i_sram_data;
                 sram_addr_w = (previous_daclrck_r && !i_daclrck)? sram_addr_r + 1 : sram_addr_r;
 
             end
@@ -108,10 +123,12 @@ always_comb begin
             if(i_stop) begin
                 previous_data_w = 16'b0;
                 sram_addr_w = 20'b0;
+                count_w = 4'b0;
             end
             else if(i_start) begin
                 previous_data_w = previous_data_r;
                 sram_addr_w = sram_addr_r;
+                count_w = count_r;
             end
         end
     endcase
@@ -123,6 +140,7 @@ always_ff @(posedge i_clk or negedge i_rst_n) begin
         dac_data_r <= 16'bz;
         previous_data_r <= 16'b0;
         previous_daclrck_r <= 0;
+        count_r <=0;
         o_fin<=0;
     end
     else begin
@@ -130,6 +148,7 @@ always_ff @(posedge i_clk or negedge i_rst_n) begin
         dac_data_r <= dac_data_w;
         previous_data_r <= previous_data_w;
         previous_daclrck_r <= previous_daclrck_w;
+        count_r <= count_w;
         o_fin<=o_fin_next;
     end
 end
