@@ -19,7 +19,10 @@ module Top (
 	input  i_clk_100k,
 	output o_I2C_SCLK,
 	inout  io_I2C_SDAT,
-	
+	// [17:0] sw
+	//0: slow1
+	//17~15 speed
+	input i_sw, 
 	// AudPlayer
 	input  i_AUD_ADCDAT,
 	inout  i_AUD_ADCLRCK,
@@ -76,7 +79,6 @@ logic [2:0] state_r, state_w;
 logic rec_fin, play_fin;
 assign io_I2C_SDAT = (i2c_oen) ? i2c_sdat : 1'bz;
 assign o_i2c_oen = i2c_oen;
-
 assign o_SRAM_ADDR = (state_r == S_RECD) ? addr_record : addr_play[19:0];
 assign io_SRAM_DQ  = (state_r == S_RECD) ? data_record : 16'dz; // sram_dq as output
 assign data_play   = (state_r != S_RECD) ? io_SRAM_DQ : 16'd0; // sram_dq as input
@@ -115,10 +117,10 @@ AudDSP dsp0(
 	.i_start(dsp_start),
 	.i_pause(dsp_pause),
 	.i_stop(dsp_stop),
-	.i_speed(),
+	.i_speed(sw[17:15]),
 	.i_fast(),
 	.i_slow_0(), // constant interpolation
-	.i_slow_1(), // linear interpolation
+	.i_slow_1(i_sw[0]), // linear interpolation
 	.i_daclrck(i_AUD_DACLRCK),
 	.i_sram_data(data_play),
 	.i_stop_addr(addr_record),

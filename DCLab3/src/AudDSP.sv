@@ -97,7 +97,8 @@ always_comb begin
                 sram_addr_w = sram_addr_r;
             end
             else begin
-                dac_data_w = i_sram_data;
+                // dac_data_w = i_sram_data;
+                dac_data_w = 16'b0100_0000_0000_0000;
                 sram_addr_w = (previous_daclrck_r && !i_daclrck)? sram_addr_r + 1 : sram_addr_r;
 
             end
