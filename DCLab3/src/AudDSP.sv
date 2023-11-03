@@ -27,10 +27,19 @@ module AudDSP(
     logic signed [15:0] previous_data_r, previous_data_w;
     logic previous_daclrck_r, previous_daclrck_w;
     logic o_fin_next;
-    logic [3:0] count_w, count_r;
+    logic [4:0] count_w, count_r;
     assign o_sram_addr = sram_addr_r;
     assign o_dac_data = dac_data_r;
     assign o_state = state;
+
+    logic [4:0] speed;
+    logic signed [15:0] test,test2,test3,test4,test5;
+    assign speed = {2'b0,i_speed};
+    assign test = previous_data_r * ($signed(i_speed + 1) - $signed(count_r));
+    assign test2 = $signed(i_sram_data) * $signed(count_r);
+    assign test3 = ( $signed(i_sram_data) * $signed(count_r) + previous_data_r * ($signed(i_speed + 1) - $signed(count_r)) );
+    assign test4 = ($signed(i_speed + 1) - $signed(count_r));
+    assign test5 = $signed(i_speed + 1);
 //fsm
 always_comb begin
     state_next = state;
@@ -78,11 +87,13 @@ always_comb begin
     dac_data_w = dac_data_r;
     sram_addr_w = sram_addr_r;
     previous_data_w = previous_data_r;
+    count_w = count_r;
     o_fin_next=o_fin;
     case(state)
         S_IDLE: begin
             o_fin_next=0;
             count_w = 4'b0;
+            previous_data_w = 16'b0;
             if(i_start) begin
                 dac_data_w = i_sram_data;
                 sram_addr_w = 20'b0;
@@ -93,29 +104,57 @@ always_comb begin
                 dac_data_w = 16'bz;
                 sram_addr_w = 20'b0;
                 o_fin_next=1;
-                previous_daclrck_w =0;
+                previous_data_w = 16'b0;
+                count_w = 4'b0;
             end
             else if(i_pause) begin
                 dac_data_w = 16'bz;
                 sram_addr_w = sram_addr_r;
-                previous_data_w = previous_daclrck_r;
+                previous_data_w = previous_data_r;
+                count_w = count_r;
             end
             else begin
                 if(i_slow_1) begin
-                    dac_data_w = ($signed(i_sram_data) * $signed(count_r) + previous_data_r * ($signed(i_speed + 1) - $signed(count_r)) ) / $signed(count_r);
+                    // dac_data_w = 1;
+                    dac_data_w = ( $signed(i_sram_data) * $signed(count_r) + previous_data_r * ($signed(speed + 1) - $signed(count_r)) ) / $signed(speed+1);
                     if (count_r > i_speed) begin
-                        count_w         = (previous_daclrck_r & !i_daclrck) ? 4'd1: count_r;
-                        sram_addr_w     = (previous_daclrck_r & !i_daclrck) ? sram_addr_r + 1 : sram_addr_r;
-                        previous_data_w = (!previous_daclrck_r & i_daclrck) ? $signed(i_sram_data) : previous_data_r;
+                        count_w         = (previous_daclrck_r && !i_daclrck) ? 4'd1: count_r;
+                        sram_addr_w     = (previous_daclrck_r && !i_daclrck) ? (sram_addr_r + 20'd1) : sram_addr_r;
+                        previous_data_w = (!previous_daclrck_r && i_daclrck) ? $signed(i_sram_data) : previous_data_r;
                     end
                     else begin
-                        count_w =  (previous_daclrck_r & !i_daclrck) ? count_r + 1: count_r;
+                        count_w =  (previous_daclrck_r && !i_daclrck) ? count_r + 1: count_r;
+                        sram_addr_w = sram_addr_r;
+                        previous_data_w = previous_data_r;
+                    end
+                end
+                else if(i_slow_0) begin
+                    dac_data_w = i_sram_data;
+                    previous_data_w = previous_data_r;
+                    if(count_r > i_speed) begin
+                        count_w = (previous_daclrck_r && !i_daclrck) ? 4'd1: count_r;
+                        sram_addr_w = (previous_daclrck_r && !i_daclrck) ? (sram_addr_r +1):sram_addr_r;
+                    end
+                    else begin
+                        count_w = (previous_daclrck_r && !i_daclrck) ? (count_r+1): count_r;
+                        sram_addr_w = sram_addr_r;
                     end
                 end
                 //normal
-                dac_data_w = i_sram_data;
-                sram_addr_w = (previous_daclrck_r && !i_daclrck)? sram_addr_r + 1 : sram_addr_r;
-
+                else begin
+                    dac_data_w = i_sram_data;
+                    previous_data_w = 16'b0;
+                    if(i_fast) begin
+                        sram_addr_w = (previous_daclrck_r && !i_daclrck)? (sram_addr_r + i_speed+1) : sram_addr_r;
+                        count_w = 0;
+                    end
+                    else begin
+                        sram_addr_w = (previous_daclrck_r && !i_daclrck)? (sram_addr_r + 1) : sram_addr_r;
+                        count_w = 0;
+                    end
+                end
+                
+                
             end
             
         end

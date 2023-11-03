@@ -22,7 +22,7 @@ module Top (
 	// [17:0] sw
 	//0: slow1
 	//17~15 speed
-	input i_sw, 
+	input [17:0] i_sw, 
 	// AudPlayer
 	input  i_AUD_ADCDAT,
 	inout  i_AUD_ADCLRCK,
@@ -117,10 +117,10 @@ AudDSP dsp0(
 	.i_start(dsp_start),
 	.i_pause(dsp_pause),
 	.i_stop(dsp_stop),
-	.i_speed(sw[17:15]),
-	.i_fast(),
-	.i_slow_0(), // constant interpolation
-	.i_slow_1(i_sw[0]), // linear interpolation
+	.i_speed(i_sw[17:15]),
+	.i_fast(i_sw[2]),
+	.i_slow_0(i_sw[0]), // constant interpolation
+	.i_slow_1(i_sw[1]), // linear interpolation
 	.i_daclrck(i_AUD_DACLRCK),
 	.i_sram_data(data_play),
 	.i_stop_addr(addr_record),
