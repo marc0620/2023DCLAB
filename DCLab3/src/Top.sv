@@ -59,12 +59,12 @@ module Top (
 
 // design the FSM and states as you like
 logic l_bclk_next;
-parameter S_IDLE       = 0;
-parameter S_I2C        = 1;
-parameter S_RECD       = 2;
-parameter S_RECD_PAUSE = 3;
-parameter S_PLAY       = 4;
-parameter S_PLAY_PAUSE = 5;
+localparam S_IDLE       = 0;
+localparam S_I2C        = 1;
+localparam S_RECD       = 2;
+localparam S_RECD_PAUSE = 3;
+localparam S_PLAY       = 4;
+localparam S_PLAY_PAUSE = 5;
 assign o_state_num = state_r;
 logic [2:0] o_state_I2C;
 assign o_state_num_nxt = o_state_I2C;//state_w;
@@ -286,11 +286,21 @@ always_comb begin
 	endcase
 end
 
+always_ff @(posedge i_clk or negedge i_rst_n) begin
+	if (~i_rst_n) begin
+		i2c_start<=1'b0;
+		cntr2048 <= 0;
+	end
+	else begin
+		i2c_start<=i2c_start_next;
+		cntr2048 <= cntr2048_nxt;
+	end
+end
+
+
 always_ff @(posedge i_AUD_BCLK or negedge i_rst_n) begin
 	if (~i_rst_n) begin
 		state_r <= S_I2C;
-		i2c_start<=1'b0;
-		i2c_sent<=1'b0;
 		//set rec signals
 		rec_start<=1'b0;
 		rec_stop<=1'b0;
@@ -299,14 +309,10 @@ always_ff @(posedge i_AUD_BCLK or negedge i_rst_n) begin
 		dsp_start<=1'b0;
 		dsp_pause<=1'b0;
 		dsp_stop<=1'b0;
-		cntr2048 <= 0;
 		l_bclk<=0;
 	end
 	else begin
-		l_bclk<=l_bclk_next;
-		i2c_sent<=i2c_sent_next;
 		state_r <= state_w;
-		i2c_start<=i2c_start_next;
 		//set rec signals
 		rec_start<=rec_start_next;
 		rec_stop<=rec_stop_next;
@@ -315,8 +321,7 @@ always_ff @(posedge i_AUD_BCLK or negedge i_rst_n) begin
 		dsp_start<=dsp_start_next;
 		dsp_pause<=dsp_pause_next;
 		dsp_stop<=dsp_stop_next;
-		cntr2048 <= cntr2048_nxt;
-
+		l_bclk<=l_bclk_next;
 	end
 end
 
