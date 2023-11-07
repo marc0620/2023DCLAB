@@ -197,6 +197,13 @@ always_comb begin
 	dsp_stop_next=dsp_stop;
 	case (state_r)
 		S_I2C: begin
+			// if(i2c_start==1'b0 && i2c_sent==1'b0) begin
+			// 	i2c_start_next=1'b1;
+			// 	i2c_sent_next=1'b1;
+			// end
+			// else if(i2c_start==1'b1) begin
+			// 	i2c_start_next=1'b0;
+			// end
 			if (i2c_fin==1'b1) begin
 				state_w=S_IDLE;
 			end

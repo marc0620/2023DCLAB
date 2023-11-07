@@ -136,6 +136,7 @@ module DE2_115 (
 	inout [6:0] EX_IO
 );
 
+// source: https://github.com/ChienKaiMa/2020Fall-NTUEE-DCLAB/
 logic key0down, key1down, key2down, key3down;
 logic CLK_12M, CLK_100K, CLK_800K;
 logic [5:0] DISPLAY_TIME;
