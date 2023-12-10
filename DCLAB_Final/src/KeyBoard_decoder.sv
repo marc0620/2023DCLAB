@@ -3,10 +3,9 @@ module keyboard_decoder (
     inout  PS2_CLK, // 10~16.7 kHz
     input  i_rst_n,
     inout  PS2_DAT,
-    output [31:0] o_key,
+    output [31:0] o_key
 );
 
-assign o_key = o_key_r;
 //tristate control
 
 localparam INIT = 0;
@@ -15,7 +14,7 @@ localparam ACTIVE = 2;
 
 localparam INIT_WAITING = 0;
 localparam INIT_ACTIVE = 1;
-localparam COMMAND_NUM = 3;
+localparam COMMAND_NUM = 5;
 
 logic [1:0] state_r, state_w;
 logic [1:0] init_state_r, init_state_w;
@@ -29,8 +28,9 @@ logic [8:0] init_cmd_r, init_cmd_w;
 logic [7:0] receive_data_r, receive_data_w;
 // tristate
 assign PS2_DAT = de ? ps2_dat_out : 1'bz;
+assign o_key = o_key_r;
 assign PS2_CLK = ce ? ps2_clk_out : 1'bz;
-assign ps2_dat_syn0 = de?1'b1, PS2_DAT;
+assign ps2_dat_syn0 = de?1'b1: PS2_DAT;
 assign ps2_clk_syn0 = ce?1'b1:PS2_CLK;
 
 always@(posedge i_clk_100k) begin
@@ -42,15 +42,13 @@ always@(posedge i_clk_100k) begin
 	end
 end
 //TODO: add init command here
-localparam [COMMAND_NUM-1:0] COMMANDS [8:0] = {
-
-
+localparam [8:0] COMMANDS [COMMAND_NUM-1:0] = {
+9'b111100000,
+9'b000000011,
+9'b111001101,
+9'b000001111,
+9'b111101001
 };
-
-
-
-
-
 
 // init logic
 always_comb begin
@@ -92,7 +90,7 @@ always_comb begin
                         init_send_count_w = init_send_count_r+1;
                     end
                     if(init_send_count_r >= 1 || init_send_count_r <= 9) begin
-                        ps2_dat_out = init_cmd_count_r[init_send_count_r-1];
+                        ps2_dat_out = init_cmd_r[init_send_count_r-1];
                     end else if(init_send_count_r==10)begin
                         de=0;
                     end
@@ -309,7 +307,6 @@ end
 
 always @(posedge i_clk_100k or negedge i_rst_n) begin
     if (~i_rst_n) begin
-        init_fin_r <= 1'b0;
         init_pdn_count_r <= 0;
         init_cmd_count_r <= 0;
         init_cmd_r <= 0;
