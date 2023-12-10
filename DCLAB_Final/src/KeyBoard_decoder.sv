@@ -3,7 +3,9 @@ module keyboard_decoder (
     inout  PS2_CLK, // 10~16.7 kHz
     input  i_rst_n,
     inout  PS2_DAT,
-    output [31:0] o_key
+    output [31:0] o_key,
+    output [2:0] o_state,
+    output [2:0] o_state_next
 );
 
 //tristate control
@@ -12,18 +14,18 @@ localparam INIT = 0;
 localparam IDLE = 1;
 localparam ACTIVE = 2;
 
-localparam INIT_WAITING = 0;
-localparam INIT_ACTIVE = 1;
-localparam COMMAND_NUM = 5;
+localparam INIT_WAITING = 1;
+localparam INIT_ACTIVE = 0;
+localparam INIT_RESP=2;
 
-logic [1:0] state_r, state_w;
-logic [1:0] init_state_r, init_state_w;
+logic [2:0] state_r, state_w;
+logic [2:0] init_state_r, init_state_w;
 logic [31:0] o_key_w, o_key_r;
 logic init_w, init_r;
 logic de, ce,ps2_clk_out , ps2_dat_out,ps2_clk_in, ps2_dat_in;
 logic ps2_clk_syn0, ps2_clk_syn1, ps2_dat_syn0, ps2_dat_syn1;
-logic receive_cnt_r, receive_cnt_w;
-logic  init_pdn_count_r, init_pdn_count_w, init_send_count_r, init_send_count_w, init_cmd_count_r, init_cmd_count_w;
+logic [5:0] receive_cnt_r, receive_cnt_w;
+logic [5:0] init_pdn_count_r, init_pdn_count_w, init_send_count_r, init_send_count_w, init_cmd_count_r, init_cmd_count_w,init_resp_count_r,init_resp_count_w;
 logic [8:0] init_cmd_r, init_cmd_w;
 logic [7:0] receive_data_r, receive_data_w;
 // tristate
@@ -32,7 +34,8 @@ assign o_key = o_key_r;
 assign PS2_CLK = ce ? ps2_clk_out : 1'bz;
 assign ps2_dat_syn0 = de?1'b1: PS2_DAT;
 assign ps2_clk_syn0 = ce?1'b1:PS2_CLK;
-
+assign o_state=state_r;
+assign o_state_next=init_cmd_count_r;
 always@(posedge i_clk_100k) begin
 	begin
 		ps2_clk_syn1 <= ps2_clk_syn0;
@@ -42,18 +45,15 @@ always@(posedge i_clk_100k) begin
 	end
 end
 //TODO: add init command here
-localparam [8:0] COMMANDS [COMMAND_NUM-1:0] = {
-9'b111100000,
-9'b000000011,
-9'b111001101,
-9'b000001111,
-9'b111101001
+localparam COMMAND_NUM = 1;
+localparam bit [8:0]  COMMANDS [COMMAND_NUM-1:0] = '{
+9'b011101110
 };
 
 // init logic
 always_comb begin
-    init_pdn_count_w=init_pdn_count_r;
-    init_send_count_w=init_send_count_r;
+    init_pdn_count_w=1'b0;
+    init_send_count_w=1'b0;
     ps2_clk_out = 1'b0;
     ps2_dat_out = 1'b0;
     init_cmd_count_w = init_cmd_count_r;
@@ -63,6 +63,7 @@ always_comb begin
     ce = 1'b0;
     receive_data_w = receive_data_r;
     o_key_w = o_key_r;
+    init_resp_count_w=0;
     case (state_r)
         INIT: begin
             case (init_state_r)
@@ -70,9 +71,7 @@ always_comb begin
                     de = 1'b0;
                     ce = 1'b1;
                     init_cmd_w = COMMANDS[init_cmd_count_r];
-                    if(init_pdn_count_r == 11) begin
-                        init_pdn_count_w = 0;
-                    end else begin
+                    if(init_pdn_count_r <= 12) begin
                         init_pdn_count_w = init_pdn_count_r+1;
                     end
                 end
@@ -89,10 +88,20 @@ always_comb begin
                     end else begin
                         init_send_count_w = init_send_count_r+1;
                     end
-                    if(init_send_count_r >= 1 || init_send_count_r <= 9) begin
+                    if(init_send_count_r >= 0 && init_send_count_r <= 8) begin
                         ps2_dat_out = init_cmd_r[init_send_count_r-1];
-                    end else if(init_send_count_r==10)begin
+                    end else if(init_send_count_r==9)begin
                         de=0;
+                    end
+                end
+                INIT_RESP: begin
+                    ce=1'b0;
+                    de=1'b0;
+                    if(init_resp_count_r<=11) begin
+                        init_resp_count_w=init_resp_count_r+1;
+                    end
+                    else begin
+                        init_resp_count_w=init_resp_count_r;
                     end
                 end
             endcase
@@ -297,7 +306,7 @@ always_comb begin
                     end
                 endcase
             end else begin
-                if(receive_cnt_r >= 1 || receive_cnt_r <= 8) begin
+                if(receive_cnt_r >= 1 && receive_cnt_r <= 8) begin
                     receive_data_w[receive_cnt_r-1] = ps2_dat_in;
                 end
             end
@@ -311,11 +320,13 @@ always @(posedge i_clk_100k or negedge i_rst_n) begin
         init_cmd_count_r <= 0;
         init_cmd_r <= 0;
         o_key_r <= 0;
+        
     end else begin
         init_pdn_count_r <= init_pdn_count_w;
         init_cmd_count_r <= init_cmd_count_w;
         init_cmd_r <= init_cmd_w;
         o_key_r <= o_key_w;
+        
     end
 end
 
@@ -324,10 +335,12 @@ always @(negedge ps2_clk_in or negedge i_rst_n) begin
         init_send_count_r <= 0;
         receive_cnt_r <= 0;
         receive_data_r <= 0;
+        init_resp_count_r<=0;
     end else begin
         init_send_count_r <= init_send_count_w;
         receive_cnt_r <= receive_cnt_w;
         receive_data_r <= receive_data_w;
+        init_resp_count_r<=init_resp_count_w;
     end
 end
 
@@ -346,12 +359,20 @@ always_comb begin
                     end
                 end
                 INIT_ACTIVE: begin
-                    if (init_send_count_r == 12) begin
-                        init_state_w = INIT_WAITING;
-                        if(init_cmd_count_r == COMMAND_NUM-1)
-                            state_w = IDLE;
+                    if (init_send_count_r == 11) begin
+                        init_state_w = INIT_RESP;
                     end else begin
                         init_state_w = INIT_ACTIVE;
+                    end
+                end
+                INIT_RESP: begin
+                    if(init_resp_count_r==11) begin
+                        if(init_cmd_count_r == COMMAND_NUM-1)begin
+                            state_w = IDLE;
+                        end
+                        else begin
+                            init_state_w=INIT_WAITING;
+                        end
                     end
                 end
             endcase
