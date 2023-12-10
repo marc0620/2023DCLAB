@@ -17,6 +17,7 @@ localparam ACTIVE = 2;
 localparam INIT_WAITING = 1;
 localparam INIT_ACTIVE = 0;
 localparam INIT_RESP=2;
+localparam INIT_STAB=3;
 
 logic [2:0] state_r, state_w;
 logic [2:0] init_state_r, init_state_w;
@@ -26,6 +27,7 @@ logic de, ce,ps2_clk_out , ps2_dat_out,ps2_clk_in, ps2_dat_in;
 logic ps2_clk_syn0, ps2_clk_syn1, ps2_dat_syn0, ps2_dat_syn1;
 logic [5:0] receive_cnt_r, receive_cnt_w;
 logic [5:0] init_pdn_count_r, init_pdn_count_w, init_send_count_r, init_send_count_w, init_cmd_count_r, init_cmd_count_w,init_resp_count_r,init_resp_count_w;
+logic [8:0] init_stab_count;
 logic [8:0] init_cmd_r, init_cmd_w;
 logic [7:0] receive_data_r, receive_data_w;
 // tristate
@@ -45,9 +47,13 @@ always@(posedge i_clk_100k) begin
 	end
 end
 //TODO: add init command here
-localparam COMMAND_NUM = 1;
-localparam bit [8:0]  COMMANDS [COMMAND_NUM-1:0] = '{
-9'b011101110
+localparam COMMAND_NUM = 5;
+localparam bit [8:0]  COMMANDS [0:COMMAND_NUM-1] = '{
+9'b111110000, //set scan code
+9'b000000001, //set scan code
+9'b111101101, //set light
+9'b000000111, //set light
+9'b011110100  //enable
 };
 
 // init logic
@@ -79,30 +85,19 @@ always_comb begin
                     ce = 1'b0;
                     de = 1'b1;
                     if (init_send_count_r == 11) begin
-                        if(init_cmd_count_r == COMMAND_NUM-1) begin
-                            init_cmd_count_w = 0;
-                        end else begin
-                            init_send_count_w = 0;
-                            init_cmd_count_w = init_cmd_count_r+1;
-                        end
-                    end else begin
-                        init_send_count_w = init_send_count_r+1;
-                    end
-                    if(init_send_count_r >= 0 && init_send_count_r <= 8) begin
+                        init_cmd_count_w = init_cmd_count_r+1;
+                    end 
+                    init_send_count_w = init_send_count_r+1;
+                    if(init_send_count_r >= 1 && init_send_count_r <= 9) begin
                         ps2_dat_out = init_cmd_r[init_send_count_r-1];
-                    end else if(init_send_count_r==9)begin
+                    end else if(init_send_count_r>=10)begin
                         de=0;
                     end
                 end
                 INIT_RESP: begin
                     ce=1'b0;
                     de=1'b0;
-                    if(init_resp_count_r<=11) begin
-                        init_resp_count_w=init_resp_count_r+1;
-                    end
-                    else begin
-                        init_resp_count_w=init_resp_count_r;
-                    end
+                    init_resp_count_w=init_resp_count_r+1;
                 end
             endcase
         end
@@ -320,12 +315,14 @@ always @(posedge i_clk_100k or negedge i_rst_n) begin
         init_cmd_count_r <= 0;
         init_cmd_r <= 0;
         o_key_r <= 0;
+        init_stab_count<=0;
         
     end else begin
         init_pdn_count_r <= init_pdn_count_w;
         init_cmd_count_r <= init_cmd_count_w;
         init_cmd_r <= init_cmd_w;
         o_key_r <= o_key_w;
+        init_stab_count<=init_stab_count+1;
         
     end
 end
@@ -351,6 +348,11 @@ always_comb begin
     case (state_r)
         INIT: begin
             case (init_state_r)
+                INIT_STAB:begin
+                    if(init_stab_count==100) begin
+                        init_state_w = INIT_WAITING;
+                    end
+                end
                 INIT_WAITING: begin
                     if(init_pdn_count_r == 12) begin
                         init_state_w = INIT_ACTIVE;
@@ -367,7 +369,7 @@ always_comb begin
                 end
                 INIT_RESP: begin
                     if(init_resp_count_r==11) begin
-                        if(init_cmd_count_r == COMMAND_NUM-1)begin
+                        if(init_cmd_count_r == COMMAND_NUM)begin
                             state_w = IDLE;
                         end
                         else begin
@@ -397,7 +399,7 @@ end
 always @(posedge i_clk_100k or negedge i_rst_n) begin
     if (~i_rst_n) begin
         state_r <= INIT;
-        init_state_r <= INIT_WAITING;
+        init_state_r <= INIT_STAB;
     end else begin
         state_r <= state_w;
         init_state_r <= init_state_w;
