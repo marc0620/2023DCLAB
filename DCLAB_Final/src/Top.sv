@@ -54,7 +54,7 @@ module Top (
 	
 	// design the FSM and states as you like
 	logic[2:0] state_r, state_w;
-	logic[15:0] carrier_data;
+	logic signed [15:0] carrier_data;
 	logic i2c_oen;
 	wire  i2c_sdat;
 	logic [15:0] data_play;
@@ -69,6 +69,11 @@ module Top (
 	assign GPIO[0] = i_clk_100k;
 	assign GPIO[1] = PS2_CLK;
 	assign GPIO[2] = PS2_DAT;
+	assign GPIO[3] = i_AUD_BCLK;
+	assign GPIO[4] = o_AUD_DACDAT;
+	assign GPIO[5] = i_AUD_DACLRCK;
+	assign GPIO[6] = carrier_data[0];
+
 	assign o_ledg[0]=i2c_fin;
 	//assign o_D_addr[19:0] = (state_r == S_RECD) ? addr_record : addr_play[19:0];
 	//assign o_D_addr[25:20] = 0;
@@ -106,11 +111,11 @@ module Top (
     	.PS2_DAT(PS2_DAT),
 		.o_key(key_array),
 		.o_state(kb_state),
-		.o_state_next(o_kb_state_next)
+		.o_state_next()
 	);
 
 	Modulator_synth s0(
-		.i_clk(i_clk),
+		.i_clk(i_AUD_BCLK),
 		.i_rst_n(i_rst_n),
 		.i_data(key_array),
 		.o_audio(carrier_data)
@@ -120,12 +125,12 @@ module Top (
 	// === AudPlayer ===
 	AudPlayer aud0(
 		.i_rst_n(i_rst_n),
-		.i_clk(i_clk),
-		.i_lrc(i_AUD_BCLK),
+		.i_clk(i_AUD_BCLK),
+		.i_lrc(i_AUD_DACLRCK),
 		.i_en(1'b1), // enable AudPlayer only when playing audio, work with AudDSP
 		.i_dac_data(carrier_data), //dac_data
 		.o_aud_dacdat(o_AUD_DACDAT),
-		.o_state(player_state)
+		.o_state(o_kb_state_next)
 	);
 	assign o_ledr=key_array[17:0];
 
@@ -135,6 +140,16 @@ module Top (
 			state_w=S_ACTIVE;
 		end
 	end
+
+	// always_ff @ (posedge i_clk_100k or negedge i_rst_n) begin
+	// 	if(~i_rst_n) begin
+	// 		carrier_data<=0;
+	// 	end
+	// 	else begin
+	// 		carrier_data<=carrier_data+128;
+	// 	end
+	// end
+
 	always_ff @( posedge i_clk or negedge i_rst_n ) begin
 		if (~i_rst_n) begin
 			state_r <= S_I2C;
