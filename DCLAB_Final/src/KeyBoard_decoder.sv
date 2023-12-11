@@ -293,7 +293,7 @@ always_comb begin
                     8'hb3: begin
                         o_key_w[29] = 1'b0;
                     end
-                    8'hb6: begin
+                    8'ha6: begin
                         o_key_w[30] = 1'b0;
                     end
                     8'hb4: begin
