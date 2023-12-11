@@ -54,7 +54,7 @@ module Top (
 	
 	// design the FSM and states as you like
 	logic[2:0] state_r, state_w;
-
+	logic[15:0] carrier_data;
 	logic i2c_oen;
 	wire  i2c_sdat;
 	logic [15:0] data_play;
@@ -62,7 +62,7 @@ module Top (
 	localparam S_ACTIVE = 1;
 	logic [31:0] key_array;
 	logic i2c_fin;
-	logic [2:0] kb_state,i2c_state;
+	logic [2:0] kb_state,i2c_state,player_state;
 	assign o_kb_state=kb_state;
 	assign io_I2C_SDAT = (i2c_oen) ? i2c_sdat : 1'bz;
 	assign o_state=state_r;
@@ -107,6 +107,25 @@ module Top (
 		.o_key(key_array),
 		.o_state(kb_state),
 		.o_state_next(o_kb_state_next)
+	);
+
+	Modulator_synth s0(
+		.i_clk(i_clk),
+		.i_rst_n(i_rst_n),
+		.i_data(key_array),
+		.o_audio(carrier_data)
+	);
+
+
+	// === AudPlayer ===
+	AudPlayer aud0(
+		.i_rst_n(i_rst_n),
+		.i_clk(i_clk),
+		.i_lrc(i_AUD_BCLK),
+		.i_en(1'b1), // enable AudPlayer only when playing audio, work with AudDSP
+		.i_dac_data(carrier_data), //dac_data
+		.o_aud_dacdat(o_AUD_DACDAT),
+		.o_state(player_state)
 	);
 	assign o_ledr=key_array[17:0];
 
