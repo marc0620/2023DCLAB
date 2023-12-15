@@ -15,21 +15,23 @@ module IIR(
 );
 
     logic signed [15:0] audio_in_one_delay_w,audio_in_one_delay_r,audio_in_two_delay_w,audio_in_two_delay_r;
-    logic signed [35:0] answer_w,answer_r;
+    logic signed [36:0] answer_w,answer_r;
     logic [3:0] count, count_next;
-    logic signed [35:0] answer;
+    logic signed [36:0] answer;
 
 
     assign o_valid = (count==3)? 1:0;
 
     always_comb begin
         if(i_valid==1) begin
+            // $display("yes");
             audio_in_one_delay_w = audio_in;
             audio_in_two_delay_w = audio_in_one_delay_r;
             count_next = count + 1;
             answer_w = answer;
         end
         else begin
+            // $display("no");
             audio_in_one_delay_w = audio_in_one_delay_r;
             audio_in_two_delay_w = audio_in_two_delay_r;
             count_next = count;
@@ -61,10 +63,16 @@ module IIR(
     //    If a(1) is not equal to 1, FILTER normalizes the filter
     //    coefficients by a(1). 
     //
-    assign answer = audio_in * b1 + audio_in_one_delay_r * b2 + audio_in_two_delay_r * b3 - audio_out_one_delay * a2 - audio_out_two_delay * a3;
+    logic signed [36:0] x_n_b_1,x_n_1_b_2,x_n_2_b_3,y_n_a_2,y_n_1_a_3;
+    assign x_n_b_1 = audio_in * b1;
+    assign x_n_1_b_2 = audio_in_one_delay_r * b2;
+    assign x_n_2_b_3 = audio_in_two_delay_r * b3;
+    assign y_n_a_2 = audio_out_one_delay * a2;
+    assign y_n_1_a_3 = audio_out_two_delay * a3;
+    assign answer = audio_in * b1 + audio_in_one_delay_r * b2 + audio_in_two_delay_r * b3 + audio_out_one_delay * a2 + audio_out_two_delay * a3;
 
-    // assign audio_out = {answer[35], answer[32:16]};
-    assign audio_out = {answer_r[35], answer_r[16:0]};
+    // assign audio_out = {answer[35], answer[32:16]}; //same as to left shift 2^16; truncate answer_r[15:0]
+    assign audio_out = {answer_r[36], answer_r[30:16]};
     
 endmodule
 
