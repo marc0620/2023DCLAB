@@ -19,6 +19,20 @@ logic 		 l_finish_r, l_finish_w;
 logic 		 o_aud_dacdat_r, o_aud_dacdat_w;
 
 
+
+logic signed [15:0] i_dac_data_slow1;
+// assign i_dac_data_slow1 = i_dac_data;
+// need a slow FF to delay the i_dac_data for an LRCK cycle
+always_ff @(posedge i_lrc or negedge i_rst_n) begin
+	if(~i_rst_n) begin
+		i_dac_data_slow1 <= 0;
+	end 
+	else begin
+		i_dac_data_slow1 <= i_dac_data;
+	end
+end
+
+
 assign o_aud_dacdat = o_aud_dacdat_r;
 
 always_comb begin 
@@ -48,7 +62,7 @@ always_comb begin
 				state_w = S_PLAY;
 				counter_w = counter_r - 1;
 				l_finish_w = 0;
-				o_aud_dacdat_w = i_dac_data[counter_r];
+				o_aud_dacdat_w = i_dac_data_slow1[counter_r];
 			end
 			else if (i_lrc) begin
 				state_w = S_WAIT;
@@ -74,13 +88,13 @@ always_comb begin
 				state_w = S_WAIT;
 				counter_w = 15;
 				l_finish_w = 0;
-				o_aud_dacdat_w = i_dac_data[counter_r];
+				o_aud_dacdat_w = i_dac_data_slow1[counter_r];
 			end
 			else begin 
 				state_w = S_PLAY;
 				counter_w = counter_r - 1;
 				l_finish_w = 0;
-				o_aud_dacdat_w = i_dac_data[counter_r];
+				o_aud_dacdat_w = i_dac_data_slow1[counter_r];
 			end
 		end
 		default : begin 
