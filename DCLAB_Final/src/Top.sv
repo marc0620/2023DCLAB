@@ -4,7 +4,7 @@ module Top (
 	input i_key_0,
 	input i_key_1,
 	input i_key_2,
-	
+	input [17:0] i_sw,
 	// AudDSP and SRAM
 	//output [25:0] o_D_addr,
 	//output [15:0] o_D_wdata,
@@ -51,7 +51,6 @@ module Top (
 	output [2:0] o_kb_state,
 	output [2:0] o_kb_state_next
 );
-	
 	// design the FSM and states as you like
 	logic[2:0] state_r, state_w;
 	logic signed [15:0] carrier_data;
@@ -61,6 +60,7 @@ module Top (
 	localparam S_ACTIVE = 1;
 	logic [31:0] key_array;
 	logic i2c_fin;
+	logic [1:0] dsp_state;
 	logic [2:0] kb_state,i2c_state,player_state;
 	logic [15:0] dac_data;
 	logic [15:0] data_record;
@@ -127,9 +127,12 @@ module Top (
 	.i_clk(i_clk),
 	.i_daclrck(i_AUD_DACLRCK),
 	.i_sram_data(data_record),
-	.carrier_data(carrier_data),
-	.i_shift(i_shift),
-	.o_dac_data(dac_data)
+	.i_carrier_data(carrier_data),
+	.i_shift(i_sw[17:11]),
+	.i_valid(i_sw[0]),
+	.o_dac_data(dac_data),
+	.o_state(o_kb_state_next),
+	.o_led(o_ledg[6:1])
 	);
 	AudRecorder recorder0(
 		.i_rst_n(i_rst_n), 
@@ -146,7 +149,7 @@ module Top (
 		.i_en(1'b1), // enable AudPlayer only when playing audio, work with AudDSP
 		.i_dac_data(dac_data), //dac_data
 		.o_aud_dacdat(o_AUD_DACDAT),
-		.o_state(o_kb_state_next)
+		.o_state()
 	);
 	assign o_ledr=key_array[17:0];
 

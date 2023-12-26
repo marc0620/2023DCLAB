@@ -221,7 +221,7 @@ Top top0(
 	//.o_D_wdata(o_D_wdata),
 	//.i_D_rdata(i_D_rdata),
 	//.o_D_we_n(o_D_we_n),
-
+	.i_sw(SW),
 	
 	// I2C
 	.i_clk_100k(CLK_100K),

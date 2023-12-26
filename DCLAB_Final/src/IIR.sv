@@ -20,6 +20,7 @@ module IIR(
     // audio_in is 16-bit signed, and refresh when lrclk_negedge
     logic signed [15:0] x_in_D1,x_in_D2;
     logic signed [36:0] y_out, y_out_D1, y_out_D2, raw_answer;
+    logic i_valid_stable;
 
     always_ff @(posedge clk or negedge i_rst_n) begin
         if(~i_rst_n) begin
@@ -55,7 +56,7 @@ module IIR(
             end
         end
     end
-
+    always_ff @(posedge )
     // The filter is a "Direct Form II Transposed"
     // 
     //    a(1)*y(n) = b(1)*x(n) + b(2)*x(n-1) + ... + b(nb+1)*x(n-nb)

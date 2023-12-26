@@ -4,14 +4,20 @@ module AudDSP(
 	input i_daclrck,
 	input [6:0] i_shift,
 	input [15:0] i_sram_data,
-    input [15:0] carrier_data,
-	output[15:0] o_dac_data
+    input [15:0] i_carrier_data,
+    input i_valid,
+	output[15:0] o_dac_data,
+    output [1:0] o_state,
+    output [5:0] o_led
 );
 
     //parameters
     //localparam end_addr = 1024000;
 
     //registers and wires
+    localparam INIT=0;
+    localparam ACTIVE=1;
+    logic state_r,state_w;
     logic signed [15:0] o_dac_data_r, o_dac_data_w;
     logic signed [15:0] prev_data_r, prev_data_w;
     logic [3:0]  ratio;
@@ -22,19 +28,32 @@ module AudDSP(
     logic signed[15:0] carrier_audio_out_300Hz,carrier_audio_out_350Hz,carrier_audio_out_400Hz,carrier_audio_out_450Hz,carrier_audio_out_500Hz,carrier_audio_out_560Hz,carrier_audio_out_620Hz,carrier_audio_out_680Hz,carrier_audio_out_750Hz,carrier_audio_out_820Hz,carrier_audio_out_888Hz,carrier_audio_out_964Hz,carrier_audio_out_1040Hz,carrier_audio_out_1125Hz,carrier_audio_out_1212Hz,carrier_audio_out_1300Hz,carrier_audio_out_1400Hz,carrier_audio_out_1500Hz,carrier_audio_out_1600Hz,carrier_audio_out_1700Hz,carrier_audio_out_1820Hz,carrier_audio_out_1944Hz,carrier_audio_out_2070Hz,carrier_audio_out_2200Hz,carrier_audio_out_2340Hz,carrier_audio_out_2480Hz,carrier_audio_out_2630Hz,carrier_audio_out_2800Hz,carrier_audio_out_3000Hz,carrier_audio_out_3130Hz,carrier_audio_out_3300Hz,carrier_audio_out_3500Hz;
     logic signed[15:0] abs_IIR_audio_out_300Hz,abs_IIR_audio_out_350Hz,abs_IIR_audio_out_400Hz,abs_IIR_audio_out_450Hz,abs_IIR_audio_out_500Hz,abs_IIR_audio_out_560Hz,abs_IIR_audio_out_620Hz,abs_IIR_audio_out_680Hz,abs_IIR_audio_out_750Hz,abs_IIR_audio_out_820Hz,abs_IIR_audio_out_888Hz,abs_IIR_audio_out_964Hz,abs_IIR_audio_out_1040Hz,abs_IIR_audio_out_1125Hz,abs_IIR_audio_out_1212Hz,abs_IIR_audio_out_1300Hz,abs_IIR_audio_out_1400Hz,abs_IIR_audio_out_1500Hz,abs_IIR_audio_out_1600Hz,abs_IIR_audio_out_1700Hz,abs_IIR_audio_out_1820Hz,abs_IIR_audio_out_1944Hz,abs_IIR_audio_out_2070Hz,abs_IIR_audio_out_2200Hz,abs_IIR_audio_out_2340Hz,abs_IIR_audio_out_2480Hz,abs_IIR_audio_out_2630Hz,abs_IIR_audio_out_2800Hz,abs_IIR_audio_out_3000Hz,abs_IIR_audio_out_3130Hz,abs_IIR_audio_out_3300Hz,abs_IIR_audio_out_3500Hz;
     // logic signed [15:0] IIR_lowpass_2000Hz;
-
-
     logic lrclk_posedge, lrclk_negedge;
+    logic [20:0] init_count_r,init_count_w;
+    logic IIR_valid;
+    assign IIR_valid = i_valid;
+    assign o_led[0] =IIR_valid;
+    assign o_led[1]=i_shift[0];
+    assign o_led[2]=init_count_r[20];
+
+
     assign lrclk_posedge = (~prev_daclrck_r) && i_daclrck;
     assign lrclk_negedge = prev_daclrck_r && (~i_daclrck);
     assign o_dac_data_w = chosen_data;
-	
+	assign o_state= state_r;
     //output
     assign o_dac_data=o_dac_data_r;
     //combinational circuit
 
     // Testing delay sram_data
     logic [15:0] sram_data_D1, sram_data_D2;
+    always_comb begin
+        case(i_shift[0])
+            1'd0: chosen_data=i_sram_data;
+            default: chosen_data=chosen_filter_data;
+        endcase
+    end
+
     always_ff@(posedge i_clk or negedge i_rst_n) begin
         if(~i_rst_n) begin
             sram_data_D1 <= 16'b0;
@@ -45,7 +64,40 @@ module AudDSP(
             sram_data_D2 <= sram_data_D1;
         end
     end
-	
+
+    always_comb begin
+        state_w=state_r;
+        if(state_r==INIT) begin
+            if(init_count_r[20])
+                state_w=ACTIVE;
+        end
+    end
+	always_ff@(posedge i_clk or negedge i_rst_n) begin
+        if(~i_rst_n) begin
+            state_r<=INIT;
+        end
+        else begin
+            state_r<=ACTIVE;
+        end
+    end
+
+    always_comb begin
+        if(state_r==INIT) begin
+            init_count_w=init_count_r+1;
+        end
+        else begin
+            init_count_w=init_count_r;
+        end
+    end
+	always_ff@(posedge i_clk or negedge i_rst_n) begin
+        if(~i_rst_n) begin
+            init_count_r<=0;
+        end
+        else begin
+            init_count_r<=init_count_w;
+        end
+    end
+
 	// always_comb begin
     //     case(i_shift[0])
     //         1'd0:    chosen_data = i_sram_data;
@@ -53,12 +105,6 @@ module AudDSP(
     //     endcase
     // end
 
-    always_comb begin
-        case(i_shift[0])
-            1'd0:    chosen_data = carrier_data;
-            default: chosen_data = chosen_carrier_filter_data;
-        endcase
-    end
 
     // IIR chosen
     always_comb begin
@@ -139,46 +185,6 @@ module AudDSP(
             
         endcase
     end
-
-    // //carrier chosen
-    //     always_comb begin
-    //     case(i_shift[5:1]) 
-    //         5'd0:   chosen_carrier_filter_data = carrier_audio_out_300Hz;
-    //         5'd1:   chosen_carrier_filter_data = carrier_audio_out_350Hz;
-    //         5'd2:   chosen_carrier_filter_data = carrier_audio_out_400Hz;
-    //         5'd3:   chosen_carrier_filter_data = carrier_audio_out_450Hz;
-    //         5'd4:   chosen_carrier_filter_data = carrier_audio_out_500Hz;
-    //         5'd5:   chosen_carrier_filter_data = carrier_audio_out_560Hz;
-    //         5'd6:   chosen_carrier_filter_data = carrier_audio_out_620Hz;
-    //         5'd7:   chosen_carrier_filter_data = carrier_audio_out_680Hz;
-    //         5'd8:   chosen_carrier_filter_data = carrier_audio_out_750Hz;
-    //         5'd9:   chosen_carrier_filter_data = carrier_audio_out_820Hz;
-    //         5'd10:  chosen_carrier_filter_data = carrier_audio_out_888Hz;
-    //         5'd11:  chosen_carrier_filter_data = carrier_audio_out_964Hz;
-    //         5'd12:  chosen_carrier_filter_data = carrier_audio_out_1040Hz;
-    //         5'd13:  chosen_carrier_filter_data = carrier_audio_out_1125Hz;
-    //         5'd14:  chosen_carrier_filter_data = carrier_audio_out_1212Hz;
-    //         5'd15:  chosen_carrier_filter_data = carrier_audio_out_1300Hz;
-    //         5'd16:  chosen_carrier_filter_data = carrier_audio_out_1400Hz;
-    //         5'd17:  chosen_carrier_filter_data = carrier_audio_out_1500Hz;
-    //         5'd18:  chosen_carrier_filter_data = carrier_audio_out_1600Hz;
-    //         5'd19:  chosen_carrier_filter_data = carrier_audio_out_1700Hz;
-    //         5'd20:  chosen_carrier_filter_data = carrier_audio_out_1820Hz;
-    //         5'd21:  chosen_carrier_filter_data = carrier_audio_out_1944Hz;
-    //         5'd22:  chosen_carrier_filter_data = carrier_audio_out_2070Hz;
-    //         5'd23:  chosen_carrier_filter_data = carrier_audio_out_2200Hz;
-    //         5'd24:  chosen_carrier_filter_data = carrier_audio_out_2340Hz;
-    //         5'd25:  chosen_carrier_filter_data = carrier_audio_out_2480Hz;
-    //         5'd26:  chosen_carrier_filter_data = carrier_audio_out_2630Hz;
-    //         5'd27:  chosen_carrier_filter_data = carrier_audio_out_2800Hz;
-    //         5'd28:  chosen_carrier_filter_data = carrier_audio_out_3000Hz;
-    //         5'd29:  chosen_carrier_filter_data = carrier_audio_out_3130Hz;
-    //         5'd30:  chosen_carrier_filter_data = carrier_audio_out_3300Hz;
-    //         5'd31:  chosen_carrier_filter_data = carrier_audio_out_3500Hz;
-            
-    //     endcase
-    // end
-
     // always_comb begin
     //     case(i_shift[5:1]) 
     //         5'd0:   chosen_carrier_filter_data = abs_IIR_audio_out_300Hz * carrier_audio_out_300Hz;
@@ -286,8 +292,8 @@ module AudDSP(
                     abs_IIR_audio_out_3300Hz * carrier_audio_out_3300Hz +
                     abs_IIR_audio_out_3500Hz * carrier_audio_out_3500Hz;
 
-    logic IIR_valid;
-    assign IIR_valid = 1'b1;
+
+
 
     IIR_300Hz filter_300(
         .clk(i_clk),
@@ -777,7 +783,7 @@ module AudDSP(
         .lrclk_negedge(lrclk_negedge),
         .lrclk_posedge(lrclk_posedge),
         .i_valid(IIR_valid),
-        .audio_in(carrier_data),
+        .audio_in(i_carrier_data),
         .b1 (18'sd67), 
         .b2 (18'sd0), 
         .b3 (-18'sd67), 
@@ -792,7 +798,7 @@ module AudDSP(
         .lrclk_negedge(lrclk_negedge),
         .lrclk_posedge(lrclk_posedge),
         .i_valid(IIR_valid),
-        .audio_in(carrier_data),
+        .audio_in(i_carrier_data),
         .b1 (18'sd78), 
         .b2 (18'sd0), 
         .b3 (-18'sd78), 
@@ -807,7 +813,7 @@ module AudDSP(
         .lrclk_negedge(lrclk_negedge),
         .lrclk_posedge(lrclk_posedge),
         .i_valid(IIR_valid),
-        .audio_in(carrier_data),
+        .audio_in(i_carrier_data),
         .b1 (18'sd59), 
         .b2 (18'sd0), 
         .b3 (-18'sd59), 
@@ -823,7 +829,7 @@ module AudDSP(
         .lrclk_negedge(lrclk_negedge),
         .lrclk_posedge(lrclk_posedge),
         .i_valid(IIR_valid),
-        .audio_in(carrier_data),
+        .audio_in(i_carrier_data),
         .b1 (18'sd67), 
         .b2 (18'sd0), 
         .b3 (-18'sd67), 
@@ -838,7 +844,7 @@ module AudDSP(
         .lrclk_negedge(lrclk_negedge),
         .lrclk_posedge(lrclk_posedge),
         .i_valid(IIR_valid),
-        .audio_in(carrier_data),
+        .audio_in(i_carrier_data),
         .b1 (18'sd75), 
         .b2 (18'sd0), 
         .b3 (-18'sd75), 
@@ -853,7 +859,7 @@ module AudDSP(
         .lrclk_negedge(lrclk_negedge),
         .lrclk_posedge(lrclk_posedge),
         .i_valid(IIR_valid),
-        .audio_in(carrier_data),
+        .audio_in(i_carrier_data),
         .b1 (18'sd84), 
         .b2 (18'sd0), 
         .b3 (-18'sd84), 
@@ -868,7 +874,7 @@ module AudDSP(
         .lrclk_negedge(lrclk_negedge),
         .lrclk_posedge(lrclk_posedge),
         .i_valid(IIR_valid),
-        .audio_in(carrier_data),
+        .audio_in(i_carrier_data),
         .b1 (18'sd93), 
         .b2 (18'sd0), 
         .b3 (-18'sd93), 
@@ -883,7 +889,7 @@ module AudDSP(
         .lrclk_negedge(lrclk_negedge),
         .lrclk_posedge(lrclk_posedge),
         .i_valid(IIR_valid),
-        .audio_in(carrier_data),
+        .audio_in(i_carrier_data),
         .b1 (18'sd102), 
         .b2 (18'sd0), 
         .b3 (-18'sd102), 
@@ -898,7 +904,7 @@ module AudDSP(
         .lrclk_negedge(lrclk_negedge),
         .lrclk_posedge(lrclk_posedge),
         .i_valid(IIR_valid),
-        .audio_in(carrier_data),
+        .audio_in(i_carrier_data),
         .b1 (18'sd112), 
         .b2 (18'sd0), 
         .b3 (-18'sd112), 
@@ -913,7 +919,7 @@ module AudDSP(
         .lrclk_negedge(lrclk_negedge),
         .lrclk_posedge(lrclk_posedge),
         .i_valid(IIR_valid),
-        .audio_in(carrier_data),
+        .audio_in(i_carrier_data),
         .b1 (18'sd122), 
         .b2 (18'sd0), 
         .b3 (-18'sd122), 
@@ -928,7 +934,7 @@ module AudDSP(
         .lrclk_negedge(lrclk_negedge),
         .lrclk_posedge(lrclk_posedge),
         .i_valid(IIR_valid),
-        .audio_in(carrier_data),
+        .audio_in(i_carrier_data),
         .b1 (18'sd133), 
         .b2 (18'sd0), 
         .b3 (-18'sd133), 
@@ -943,7 +949,7 @@ module AudDSP(
         .lrclk_negedge(lrclk_negedge),
         .lrclk_posedge(lrclk_posedge),
         .i_valid(IIR_valid),
-        .audio_in(carrier_data),
+        .audio_in(i_carrier_data),
         .b1 (18'sd144), 
         .b2 (18'sd0), 
         .b3 (-18'sd144), 
@@ -958,7 +964,7 @@ module AudDSP(
         .lrclk_negedge(lrclk_negedge),
         .lrclk_posedge(lrclk_posedge),
         .i_valid(IIR_valid),
-        .audio_in(carrier_data),
+        .audio_in(i_carrier_data),
         .b1 (18'sd156), 
         .b2 (18'sd0), 
         .b3 (-18'sd156), 
@@ -973,7 +979,7 @@ module AudDSP(
         .lrclk_negedge(lrclk_negedge),
         .lrclk_posedge(lrclk_posedge),
         .i_valid(IIR_valid),
-        .audio_in(carrier_data),
+        .audio_in(i_carrier_data),
         .b1 (18'sd168), 
         .b2 (18'sd0), 
         .b3 (-18'sd168), 
@@ -988,7 +994,7 @@ module AudDSP(
         .lrclk_negedge(lrclk_negedge),
         .lrclk_posedge(lrclk_posedge),
         .i_valid(IIR_valid),
-        .audio_in(carrier_data),
+        .audio_in(i_carrier_data),
         .b1 (18'sd181), 
         .b2 (18'sd0), 
         .b3 (-18'sd181), 
@@ -1003,7 +1009,7 @@ module AudDSP(
         .lrclk_negedge(lrclk_negedge),
         .lrclk_posedge(lrclk_posedge),
         .i_valid(IIR_valid),
-        .audio_in(carrier_data),
+        .audio_in(i_carrier_data),
         .b1 (18'sd195), 
         .b2 (18'sd0), 
         .b3 (-18'sd195), 
@@ -1018,7 +1024,7 @@ module AudDSP(
         .lrclk_negedge(lrclk_negedge),
         .lrclk_posedge(lrclk_posedge),
         .i_valid(IIR_valid),
-        .audio_in(carrier_data),
+        .audio_in(i_carrier_data),
         .b1 (18'sd209), 
         .b2 (18'sd0), 
         .b3 (-18'sd209), 
@@ -1033,7 +1039,7 @@ module AudDSP(
         .lrclk_negedge(lrclk_negedge),
         .lrclk_posedge(lrclk_posedge),
         .i_valid(IIR_valid),
-        .audio_in(carrier_data),
+        .audio_in(i_carrier_data),
         .b1(18'sd224),
         .b2(18'sd0),
         .b3(-18'sd224),
@@ -1048,7 +1054,7 @@ module AudDSP(
         .lrclk_negedge(lrclk_negedge),
         .lrclk_posedge(lrclk_posedge),
         .i_valid(IIR_valid),
-        .audio_in(carrier_data),
+        .audio_in(i_carrier_data),
         .b1 (18'sd239), 
         .b2 (18'sd0), 
         .b3 (-18'sd239), 
@@ -1063,7 +1069,7 @@ module AudDSP(
             .lrclk_negedge(lrclk_negedge),
             .lrclk_posedge(lrclk_posedge),
             .i_valid(IIR_valid),
-            .audio_in(carrier_data),
+            .audio_in(i_carrier_data),
             .b1 (18'sd255), 
             .b2 (18'sd0), 
             .b3 (-18'sd255), 
@@ -1078,7 +1084,7 @@ module AudDSP(
             .lrclk_negedge(lrclk_negedge),
             .lrclk_posedge(lrclk_posedge),
             .i_valid(IIR_valid),
-            .audio_in(carrier_data),
+            .audio_in(i_carrier_data),
             .b1 (18'sd272), 
             .b2 (18'sd0), 
             .b3 (-18'sd272), 
@@ -1093,7 +1099,7 @@ module AudDSP(
             .lrclk_negedge(lrclk_negedge),
             .lrclk_posedge(lrclk_posedge),
             .i_valid(IIR_valid),
-            .audio_in(carrier_data),
+            .audio_in(i_carrier_data),
             .b1 (18'sd290), 
             .b2 (18'sd0), 
             .b3 (-18'sd290), 
@@ -1108,7 +1114,7 @@ module AudDSP(
             .lrclk_negedge(lrclk_negedge),
             .lrclk_posedge(lrclk_posedge),
             .i_valid(IIR_valid),
-            .audio_in(carrier_data),
+            .audio_in(i_carrier_data),
             .b1 (18'sd309), 
             .b2 (18'sd0), 
             .b3 (-18'sd309), 
@@ -1123,7 +1129,7 @@ module AudDSP(
             .lrclk_negedge(lrclk_negedge),
             .lrclk_posedge(lrclk_posedge),
             .i_valid(IIR_valid),
-            .audio_in(carrier_data),
+            .audio_in(i_carrier_data),
             .b1 (18'sd328), 
             .b2 (18'sd0), 
             .b3 (-18'sd328), 
@@ -1138,7 +1144,7 @@ module AudDSP(
             .lrclk_negedge(lrclk_negedge),
             .lrclk_posedge(lrclk_posedge),
             .i_valid(IIR_valid),
-            .audio_in(carrier_data),
+            .audio_in(i_carrier_data),
             .b1 (18'sd349), 
             .b2 (18'sd0), 
             .b3 (-18'sd349), 
@@ -1153,7 +1159,7 @@ module AudDSP(
             .lrclk_negedge(lrclk_negedge),
             .lrclk_posedge(lrclk_posedge),
             .i_valid(IIR_valid),
-            .audio_in(carrier_data),
+            .audio_in(i_carrier_data),
             .b1 (18'sd370), 
             .b2 (18'sd0), 
             .b3 (-18'sd370), 
@@ -1168,7 +1174,7 @@ module AudDSP(
             .lrclk_negedge(lrclk_negedge),
             .lrclk_posedge(lrclk_posedge),
             .i_valid(IIR_valid),
-            .audio_in(carrier_data),
+            .audio_in(i_carrier_data),
             .b1 (18'sd392), 
             .b2 (18'sd0), 
             .b3 (-18'sd392), 
@@ -1183,7 +1189,7 @@ module AudDSP(
             .lrclk_negedge(lrclk_negedge),
             .lrclk_posedge(lrclk_posedge),
             .i_valid(IIR_valid),
-            .audio_in(carrier_data),
+            .audio_in(i_carrier_data),
             .b1 (18'sd416), 
             .b2 (18'sd0), 
             .b3 (-18'sd416), 
@@ -1198,7 +1204,7 @@ module AudDSP(
             .lrclk_negedge(lrclk_negedge),
             .lrclk_posedge(lrclk_posedge),
             .i_valid(IIR_valid),
-            .audio_in(carrier_data),
+            .audio_in(i_carrier_data),
             .b1 (18'sd440), 
             .b2 (18'sd0), 
             .b3 (-18'sd440), 
@@ -1213,7 +1219,7 @@ module AudDSP(
             .lrclk_negedge(lrclk_negedge),
             .lrclk_posedge(lrclk_posedge),
             .i_valid(IIR_valid),
-            .audio_in(carrier_data),
+            .audio_in(i_carrier_data),
             .b1 (18'sd466), 
             .b2 (18'sd0), 
             .b3 (-18'sd466), 
@@ -1228,7 +1234,7 @@ module AudDSP(
             .lrclk_negedge(lrclk_negedge),
             .lrclk_posedge(lrclk_posedge),
             .i_valid(IIR_valid),
-            .audio_in(carrier_data),
+            .audio_in(i_carrier_data),
             .b1 (18'sd493), 
             .b2 (18'sd0), 
             .b3 (-18'sd493), 
@@ -1243,7 +1249,7 @@ module AudDSP(
             .lrclk_negedge(lrclk_negedge),
             .lrclk_posedge(lrclk_posedge),
             .i_valid(IIR_valid),
-            .audio_in(carrier_data),
+            .audio_in(i_carrier_data),
             .b1 (18'sd521), 
             .b2 (18'sd0), 
             .b3 (-18'sd521), 
