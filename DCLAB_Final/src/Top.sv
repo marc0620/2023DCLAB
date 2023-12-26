@@ -57,12 +57,13 @@ module Top (
 	logic signed [15:0] carrier_data;
 	logic i2c_oen;
 	wire  i2c_sdat;
-	logic [15:0] data_play;
 	localparam S_I2C = 0;
 	localparam S_ACTIVE = 1;
 	logic [31:0] key_array;
 	logic i2c_fin;
 	logic [2:0] kb_state,i2c_state,player_state;
+	logic [15:0] dac_data;
+	logic [15:0] data_record;
 	assign o_kb_state=kb_state;
 	assign io_I2C_SDAT = (i2c_oen) ? i2c_sdat : 1'bz;
 	assign o_state=state_r;
@@ -121,14 +122,29 @@ module Top (
 		.o_audio(carrier_data)
 	);
 
-
+	AudDSP dsp0(
+	.i_rst_n(i_rst_n),
+	.i_clk(i_clk),
+	.i_daclrck(i_AUD_DACLRCK),
+	.i_sram_data(data_record),
+	.carrier_data(carrier_data),
+	.i_shift(i_shift),
+	.o_dac_data(dac_data)
+	);
+	AudRecorder recorder0(
+		.i_rst_n(i_rst_n), 
+		.i_clk(i_AUD_BCLK),
+		.i_lrc(i_AUD_ADCLRCK),
+		.i_data(i_AUD_ADCDAT),
+		.o_data(data_record)
+	);
 	// === AudPlayer ===
 	AudPlayer aud0(
 		.i_rst_n(i_rst_n),
 		.i_clk(i_AUD_BCLK),
 		.i_lrc(i_AUD_DACLRCK),
 		.i_en(1'b1), // enable AudPlayer only when playing audio, work with AudDSP
-		.i_dac_data(carrier_data), //dac_data
+		.i_dac_data(dac_data), //dac_data
 		.o_aud_dacdat(o_AUD_DACDAT),
 		.o_state(o_kb_state_next)
 	);
