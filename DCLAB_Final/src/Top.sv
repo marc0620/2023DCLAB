@@ -48,7 +48,7 @@ module Top (
 	logic player_enable;
 	logic rec_start,rec_start_next, dsp_start, dsp_start_next;
     logic [2:0] kb_state;
-    logic [31:0] key_array;
+    logic [32:0] key_array;
     logic signed [15:0] carrier_data;
 
 	assign io_I2C_SDAT = (i2c_oen) ? i2c_sdat : 1'bz;

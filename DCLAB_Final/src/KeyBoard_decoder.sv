@@ -3,7 +3,7 @@ module keyboard_decoder (
     inout  PS2_CLK, // 10~16.7 kHz
     input  i_rst_n,
     inout  PS2_DAT,
-    output [31:0] o_key,
+    output [32:0] o_key,
     output [2:0] o_state,
     output [2:0] o_state_next
 );
@@ -298,6 +298,12 @@ always_comb begin
                     end
                     8'hb4: begin
                         o_key_w[31] = 1'b0;
+                    end
+                    8'h39: begin
+                        o_key_w[32] = 1'b1;
+                    end
+                    8'h3a: begin
+                        o_key_w[32] = 1'b0;
                     end
                 endcase
             end else begin
