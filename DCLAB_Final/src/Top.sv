@@ -144,13 +144,8 @@ module Top (
 	.i_clk(i_AUD_BCLK),
 	.i_lrc(i_AUD_ADCLRCK),
 	.i_start(rec_start),
-	.i_pause(rec_pause),
-	.i_stop(rec_stop),
 	.i_data(i_AUD_ADCDAT),
-	.o_address(addr_record),
 	.o_data(data_record),
-	.o_state(o_state_RECD),
-	.o_fin(rec_fin)
 );
 AudDSP dsp0(
 	.i_rst_n(i_rst_n),
