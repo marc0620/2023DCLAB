@@ -204,25 +204,9 @@ Debounce deb2(
 Top top0(
 	.i_rst_n(KEY[3]),
 	.i_clk(CLK_12M),
-	.i_key_0(key0down),
 	.i_key_1(key1down),
-	.i_key_2(key2down),
 	.i_shift(SW[17:11]),
 	.o_leds(LEDG),
-	//AudDSP and SRAM
-	.o_SRAM_ADDR(SRAM_ADDR), // [19:0]
-	.io_SRAM_DQ(SRAM_DQ), // [15:0]
-	.o_SRAM_WE_N(SRAM_WE_N),
-	.o_SRAM_CE_N(SRAM_CE_N),
-	.o_SRAM_OE_N(SRAM_OE_N),
-	.o_SRAM_LB_N(SRAM_LB_N),
-	.o_SRAM_UB_N(SRAM_UB_N),
-	//.o_D_addr(o_D_addr),
-	//.o_D_wdata(o_D_wdata),
-	//.i_D_rdata(i_D_rdata),
-	//.o_D_we_n(o_D_we_n),
-
-	
 	// I2C
 	.i_clk_100k(CLK_100K),
 	.o_I2C_SCLK(I2C_SCLK),
@@ -236,14 +220,6 @@ Top top0(
 	.i_AUD_BCLK(AUD_BCLK),
 	.i_AUD_DACLRCK(AUD_DACLRCK),
 	.o_AUD_DACDAT(AUD_DACDAT),
-
-	// SEVENDECODER (optional display)
-	.o_display_time(DISPLAY_TIME),
-	.o_state(top_state),
-	.o_state_RECD(rec_state),
-	.o_state_DSP(dsp_state),
-	// .o_record_time(recd_time),
-	// .o_play_time(play_time),
 
 	// LCD (optional display)
 	// .i_clk_800k(CLK_800K),

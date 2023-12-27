@@ -1,9 +1,7 @@
 module Top (
 	input i_rst_n,
 	input i_clk,
-	input i_key_0,
 	input i_key_1,
-	input i_key_2,
 	input [6:0] i_shift,
 	output [8:0]  o_leds,
 	// I2C
@@ -20,10 +18,6 @@ module Top (
 	inout  i_AUD_DACLRCK,
 	output o_AUD_DACDAT,
 
-	// SEVENDECODER (optional display)
-	output [5:0] o_display_time,
-	// output [5:0] o_play_time,
-
 	// LCD (optional display)
 	// input        i_clk_800k,
 	// inout  [7:0] o_LCD_DATA,
@@ -35,9 +29,6 @@ module Top (
 
 	// LED
 	// output  [8:0] o_ledg,
-	output [2:0] o_state_RECD,
-	output [2:0] o_state_DSP,
-	output [2:0] o_state,
 	output [17:0] o_ledr
 );
 	
