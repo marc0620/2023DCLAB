@@ -279,7 +279,7 @@ Top top0(
  );
 
  SevenHexDecoder seven_dec3(
- 	.i_hex(SW[2:0] + 5'b1),
+ 	.i_hex(dsp_state),
  	.o_seven_ten(HEX5),
   	.o_seven_one(HEX4)
  );

@@ -90,8 +90,19 @@ module Top (
 	//assign o_D_wdata = (state_r == S_RECD) ? data_record : 16'd0;
 	//assign i_data_play = (state_r != S_RECD) ? i_D_rdata : 16'd0; 
 	assign o_SRAM_ADDR = (state_r == S_RECD) ? addr_record : addr_play[19:0];
-	assign io_SRAM_DQ  = (state_r == S_RECD) ? data_record : 16'dz; // sram_dq as output
-	assign data_play   = (state_r != S_RECD) ? io_SRAM_DQ : 16'd0; // sram_dq as input
+	// assign io_SRAM_DQ  = (state_r == S_RECD) ? data_record : 16'dz; // sram_dq as output
+	// assign data_play   = (state_r != S_RECD) ? io_SRAM_DQ : 16'd0; // sram_dq as input
+
+	logic [15:0] pseudo_SRAM;
+	always_ff @(posedge i_clk or negedge i_rst_n) begin
+		if (~i_rst_n) begin
+			pseudo_SRAM <= 16'd0;
+		end
+		else begin
+			pseudo_SRAM <= data_record;
+		end
+	end
+
 
 	//assign o_D_we_n = (state_r == S_RECD) ? 1'b0 : 1'b1;
 	assign o_SRAM_WE_N = (state_r == S_RECD) ? 1'b0 : 1'b1;
@@ -164,7 +175,7 @@ AudDSP dsp0(
 	.i_slow_1(i_slow_1), // linear interpolation
 	.i_reverse(i_reverse),
 	.i_daclrck(i_AUD_DACLRCK),
-	.i_sram_data(data_play),
+	.i_sram_data(pseudo_SRAM),
 	.i_stop_addr(addr_record),
     .carrier_data(carrier_data),
 	.i_shift(i_shift),
@@ -246,6 +257,7 @@ always_comb begin
 			else if(i_key_1==1'b1) begin
 				state_w=S_PLAY;
 				dsp_start_next=1'b1;
+				rec_start_next=1'b1;
 				rec_stop_next=1'b0;
 				dsp_stop_next=1'b0;
 			end
@@ -287,34 +299,9 @@ always_comb begin
 			end
 		end
 		S_PLAY: begin
-			if(i_key_2==1'b1 || play_fin) begin
-				state_w=S_IDLE;
-				dsp_stop_next=1'b1;
-				dsp_start_next=1'b0;
-			end
-			else if(i_key_1==1'b1) begin
-				dsp_pause_next=1'b1;
-				state_w=S_PLAY_PAUSE;
-				dsp_start_next=1'b0;
-			end
-			else begin
-				state_w=S_PLAY;
-			end
-		end
-		S_PLAY_PAUSE: begin
-			if(i_key_2==1'b1) begin
-				state_w=S_IDLE;
-				dsp_stop_next=1'b1;
-				dsp_pause_next=1'b0;
-			end
-			else if(i_key_1==1'b1) begin
-				dsp_start_next=1'b1;
-				state_w=S_PLAY;
-				dsp_pause_next=1'b0;
-			end
-			else begin
-				state_w=S_PLAY_PAUSE;
-			end
+			dsp_stop_next=1'b0;
+			dsp_start_next=1'b0;
+			state_w=S_PLAY;
 		end
 	endcase
 end

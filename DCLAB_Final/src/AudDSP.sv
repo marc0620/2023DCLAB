@@ -396,7 +396,7 @@ module AudDSP(
                 o_fin_next=0;
                 if(i_start) begin
                     state_w = S_PLAY;
-                    o_dac_data_w = i_sram_data;
+                    o_dac_data_w = chosen_data;
                     o_sram_addr_w = (i_reverse)? i_stop_addr : o_sram_addr_r;
                     prev_data_w = 16'd0;
                     counter_w = 4'd0;
@@ -412,13 +412,13 @@ module AudDSP(
             S_PLAY: begin
                 if((i_stop || (o_sram_addr_r >= i_stop_addr)) && i_slow_1) begin
                     state_w = S_IDLE;
-                    o_dac_data_w = prev_data_r;
+                    o_dac_data_w = chosen_data;
                     o_sram_addr_w = 20'd0;
                     prev_data_w = 16'b0;
                     counter_w = 4'd0;
                     o_fin_next=1;
                 end
-                else if(i_stop || ((o_sram_addr_r >= i_stop_addr) && (~i_reverse)) || ((o_sram_addr_r == 20'd0) && (i_reverse))) begin
+                else if(i_stop|| ((o_sram_addr_r == 20'd0) && (i_reverse))) begin
                     state_w = S_IDLE;
                     o_dac_data_w = 16'bZ;
                     o_sram_addr_w = 20'd0;
