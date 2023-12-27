@@ -50,7 +50,7 @@ module Top (
     logic [2:0] kb_state;
     logic [32:0] key_array;
     logic signed [15:0] carrier_data;
-
+	assign o_leds[0]=key_array[32];
 	assign io_I2C_SDAT = (i2c_oen) ? i2c_sdat : 1'bz;
 
 	logic [15:0] pseudo_SRAM;

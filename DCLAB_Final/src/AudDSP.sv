@@ -93,7 +93,6 @@ module AudDSP(
     end
 
     logic signed [31:0] multi_300, multi_350, multi_400, multi_450, multi_500, multi_560, multi_620, multi_680, multi_750, multi_820, multi_888, multi_964, multi_1040, multi_1125, multi_1212, multi_1300, multi_1400, multi_1500, multi_1600, multi_1700, multi_1820, multi_1944, multi_2070, multi_2200, multi_2340, multi_2480, multi_2630, multi_2800, multi_3000, multi_3130, multi_3300, multi_3500;
-    logic signed [15:0] multi_trun_300, multi_trun_350, multi_trun_400, multi_trun_450, multi_trun_500, multi_trun_560, multi_trun_620, multi_trun_680, multi_trun_750, multi_trun_820, multi_trun_888, multi_trun_964, multi_trun_1040, multi_trun_1125, multi_trun_1212, multi_trun_1300, multi_trun_1400, multi_trun_1500, multi_trun_1600, multi_trun_1700, multi_trun_1820, multi_trun_1944, multi_trun_2070, multi_trun_2200, multi_trun_2340, multi_trun_2480, multi_trun_2630, multi_trun_2800, multi_trun_3000, multi_trun_3130, multi_trun_3300, multi_trun_3500;
     assign multi_300 = abs_IIR_audio_out_300Hz * carrier_audio_out_300Hz;
     assign multi_350 = abs_IIR_audio_out_350Hz * carrier_audio_out_350Hz;
     assign multi_400 = abs_IIR_audio_out_400Hz * carrier_audio_out_400Hz;
@@ -127,62 +126,42 @@ module AudDSP(
     assign multi_3300 = abs_IIR_audio_out_3300Hz * carrier_audio_out_3300Hz;
     assign multi_3500 = abs_IIR_audio_out_3500Hz * carrier_audio_out_3500Hz;
     
-    // assign multi_trun_350 = {multi_350[31],multi_350[25:11]};
-    // assign multi_trun_300 = {multi_300[31],multi_300[25:11]};
-    // assign multi_trun_400 = {multi_400[31],multi_400[25:11]};
-    // assign multi_trun_450 = {multi_450[31],multi_450[25:11]};
-    // assign multi_trun_500 = {multi_500[31],multi_500[25:11]};
-    // assign multi_trun_560 = {multi_560[31],multi_560[25:11]};
-    // assign multi_trun_620 = {multi_620[31],multi_620[25:11]};
-    // assign multi_trun_680 = {multi_680[31],multi_680[25:11]};
-    // assign multi_trun_750 = {multi_750[31],multi_750[25:11]};
-    // assign multi_trun_820 = {multi_820[31],multi_820[25:11]};
-    // assign multi_trun_888 = {multi_888[31],multi_888[25:11]};
-    // assign multi_trun_964 = {multi_964[31],multi_964[25:11]};
-    // assign multi_trun_1040 = {multi_1040[31],multi_1040[25:11]};
-    // assign multi_trun_1125 = {multi_1125[31],multi_1125[25:11]};
-    // assign multi_trun_1212 = {multi_1212[31],multi_1212[25:11]};
-    // assign multi_trun_1300 = {multi_1300[31],multi_1300[25:11]};
-    // assign multi_trun_1400 = {multi_1400[31],multi_1400[25:11]};
-    // assign multi_trun_1500 = {multi_1500[31],multi_1500[25:11]};
-    // assign multi_trun_1600 = {multi_1600[31],multi_1600[25:11]};
-    // assign multi_trun_1700 = {multi_1700[31],multi_1700[25:11]};
-    // assign multi_trun_1820 = {multi_1820[31],multi_1820[25:11]};
-    // assign multi_trun_1944 = {multi_1944[31],multi_1944[25:11]};
-    // assign multi_trun_2070 = {multi_2070[31],multi_2070[25:11]};
-    // assign multi_trun_2200 = {multi_2200[31],multi_2200[25:11]};
-    // assign multi_trun_2340 = {multi_2340[31],multi_2340[25:11]};
-    // assign multi_trun_2480 = {multi_2480[31],multi_2480[25:11]};
-    // assign multi_trun_2630 = {multi_2630[31],multi_2630[25:11]};
-    // assign multi_trun_2800 = {multi_2800[31],multi_2800[25:11]};
-    // assign multi_trun_3000 = {multi_3000[31],multi_3000[25:11]};
-    // assign multi_trun_3130 = {multi_3130[31],multi_3130[25:11]};
-    // assign multi_trun_3300 = {multi_3300[31],multi_3300[25:11]};
-    // assign multi_trun_3500 = {multi_3500[31],multi_3500[25:11]};
 
-    logic signed [36:0] add_all_32;
-    logic signed [36:0] added_all_16;
-    logic signed [36:0] added_all_8;
-    logic signed [36:0] added_all_4;
-    logic signed [36:0] added_all_2;
+    logic signed [36:0] add_all_32_uncompressed, add_all_32_compressed, add_all_32;
+    assign add_all_32_uncompressed = multi_300+multi_350+multi_400+multi_450+multi_500+multi_560+multi_620+multi_680+multi_750+multi_820+multi_888+multi_964+multi_1040+multi_1125+multi_1212+multi_1300+multi_1400+multi_1500+multi_1600+multi_1700+multi_1820+multi_1944+multi_2070+multi_2200+multi_2340+multi_2480+multi_2630+multi_2800+multi_3000+multi_3130+multi_3300+multi_3500;
 
-    // //add_all_32 is add all multi_trun
-    // assign add_all_32 = multi_trun_300+multi_trun_350+multi_trun_400+multi_trun_450+multi_trun_500+multi_trun_560+multi_trun_620+multi_trun_680+multi_trun_750+multi_trun_820+multi_trun_888+multi_trun_964+multi_trun_1040+multi_trun_1125+multi_trun_1212+multi_trun_1300+multi_trun_1400+multi_trun_1500+multi_trun_1600+multi_trun_1700+multi_trun_1820+multi_trun_1944+multi_trun_2070+multi_trun_2200+multi_trun_2340+multi_trun_2480+multi_trun_2630+multi_trun_2800+multi_trun_3000+multi_trun_3130+multi_trun_3300+multi_trun_3500;
-    // //add_all_16 is add all multi_trun
-    // assign add_all_16 = multi_trun_300+multi_trun_350+multi_trun_400+multi_trun_450+multi_trun_500+multi_trun_560+multi_trun_620+multi_trun_680+multi_trun_750+multi_trun_820+multi_trun_888+multi_trun_964+multi_trun_1040+multi_trun_1125+multi_trun_1212+multi_trun_1300;
-    // //add_all_8 is add all multi_trun
-    // assign add_all_8 = multi_trun_300+multi_trun_350+multi_trun_400+multi_trun_450+multi_trun_500+multi_trun_560+multi_trun_620+multi_trun_680;
-    // //add_all_4 is add all multi_trun
-    // assign add_all_4 = multi_trun_300+multi_trun_350+multi_trun_400+multi_trun_450;
-    // //add_all_2 is add all multi_trun
-    // assign add_all_2 = multi_trun_300+multi_trun_350;
+    
+    // do add_all_32 compression
 
-    assign add_all_32 = multi_300+multi_350+multi_400+multi_450+multi_500+multi_560+multi_620+multi_680+multi_750+multi_820+multi_888+multi_964+multi_1040+multi_1125+multi_1212+multi_1300+multi_1400+multi_1500+multi_1600+multi_1700+multi_1820+multi_1944+multi_2070+multi_2200+multi_2340+multi_2480+multi_2630+multi_2800+multi_3000+multi_3130+multi_3300+multi_3500;
+    assign add_all_32 = i_bit_test[0]? add_all_32_uncompressed : add_all_32_compressed;
+    
+    
+    always_comb begin
+        case (add_all_32_uncompressed[36:34])
+            -4'sd8: add_all_32_compressed = ((add_all_32_uncompressed >>> 1)- 37'b0_1000_0000_0000_0000_0000_0000_0000_0000_0000);
+            -4'sd7: add_all_32_compressed = ((add_all_32_uncompressed >>> 1)- 37'b0_1000_0000_0000_0000_0000_0000_0000_0000_0000);
+            -4'sd6: add_all_32_compressed = ((add_all_32_uncompressed >>> 1)- 37'b0_1000_0000_0000_0000_0000_0000_0000_0000_0000);
+            -4'sd5: add_all_32_compressed = ((add_all_32_uncompressed >>> 1)+ (add_all_32_uncompressed >>> 2) - 37'b0_0101_1000_0000_0000_0000_0000_0000_0000_0000);
+            -4'sd4: add_all_32_compressed = ((add_all_32_uncompressed >>> 1)+ (add_all_32_uncompressed >>> 2) - 37'b0_0101_1000_0000_0000_0000_0000_0000_0000_0000);
+            -4'sd3: add_all_32_compressed = (add_all_32_uncompressed + (add_all_32_uncompressed >>> 1) - 37'b0_0001_0000_0000_0000_0000_0000_0000_0000_0000);
+            -4'sd2: add_all_32_compressed = (add_all_32_uncompressed + (add_all_32_uncompressed >>> 1) - 37'b0_0001_0000_0000_0000_0000_0000_0000_0000_0000);
+            -4'sd1: add_all_32_compressed = (add_all_32_uncompressed <<< 1);
+             4'sd0: add_all_32_compressed = (add_all_32_uncompressed <<< 1);
+             4'sd1: add_all_32_compressed = (add_all_32_uncompressed + (add_all_32_uncompressed >>> 1) + 37'b0_0001_0000_0000_0000_0000_0000_0000_0000_0000);
+             4'sd2: add_all_32_compressed = (add_all_32_uncompressed + (add_all_32_uncompressed >>> 1) + 37'b0_0001_0000_0000_0000_0000_0000_0000_0000_0000);
+             4'sd3: add_all_32_compressed = ((add_all_32_uncompressed >>> 1)+ (add_all_32_uncompressed >>> 2) + 37'b0_0101_1000_0000_0000_0000_0000_0000_0000_0000);
+             4'sd4: add_all_32_compressed = ((add_all_32_uncompressed >>> 1)+ (add_all_32_uncompressed >>> 2) + 37'b0_0101_1000_0000_0000_0000_0000_0000_0000_0000);
+             4'sd5: add_all_32_compressed = ((add_all_32_uncompressed >>> 1)+ 37'b0_1000_0000_0000_0000_0000_0000_0000_0000_0000);
+             4'sd6: add_all_32_compressed = ((add_all_32_uncompressed >>> 1)+ 37'b0_1000_0000_0000_0000_0000_0000_0000_0000_0000);
+            default:  add_all_32_compressed = ((add_all_32_uncompressed >>> 1)+ 37'b0_1000_0000_0000_0000_0000_0000_0000_0000_0000);
+        endcase
+    end
+
+
 
 
     always_comb begin
         case(i_bit_test)
-            11'b00000000001:   chosen_added_all = {add_all_32[36],add_all_32[30:16]};
             11'b00000000010:   chosen_added_all = {add_all_32[36],add_all_32[29:15]};
             11'b00000000100:   chosen_added_all = {add_all_32[36],add_all_32[28:14]};
             11'b00000001000:   chosen_added_all = {add_all_32[36],add_all_32[27:13]};
@@ -202,38 +181,38 @@ module AudDSP(
 
      always_comb begin
         case(i_shift[5:1]) 
-            5'd0:   chosen_multi_data = multi_trun_350 ;
-            5'd1:   chosen_multi_data = multi_trun_300 ;
-            5'd2:   chosen_multi_data = multi_trun_400 ;
-            5'd3:   chosen_multi_data = multi_trun_450 ;
-            5'd4:   chosen_multi_data = multi_trun_500 ;
-            5'd5:   chosen_multi_data = multi_trun_560 ;
-            5'd6:   chosen_multi_data = multi_trun_620 ;
-            5'd7:   chosen_multi_data = multi_trun_680 ;
-            5'd8:   chosen_multi_data = multi_trun_750 ;
-            5'd9:   chosen_multi_data = multi_trun_820 ;
-            5'd10:  chosen_multi_data = multi_trun_888 ;
-            5'd11:  chosen_multi_data = multi_trun_964 ;
-            5'd12:  chosen_multi_data = multi_trun_1040;
-            5'd13:  chosen_multi_data = multi_trun_1125;
-            5'd14:  chosen_multi_data = multi_trun_1212;
-            5'd15:  chosen_multi_data = multi_trun_1300;
-            5'd16:  chosen_multi_data = multi_trun_1400;
-            5'd17:  chosen_multi_data = multi_trun_1500;
-            5'd18:  chosen_multi_data = multi_trun_1600;
-            5'd19:  chosen_multi_data = multi_trun_1700;
-            5'd20:  chosen_multi_data = multi_trun_1820;
-            5'd21:  chosen_multi_data = multi_trun_1944;
-            5'd22:  chosen_multi_data = multi_trun_2070;
-            5'd23:  chosen_multi_data = multi_trun_2200;
-            5'd24:  chosen_multi_data = multi_trun_2340;
-            5'd25:  chosen_multi_data = multi_trun_2480;
-            5'd26:  chosen_multi_data = multi_trun_2630;
-            5'd27:  chosen_multi_data = multi_trun_2800;
-            5'd28:  chosen_multi_data = multi_trun_3000;
-            5'd29:  chosen_multi_data = multi_trun_3130;
-            5'd30:  chosen_multi_data = multi_trun_3300;
-            5'd31:  chosen_multi_data = multi_trun_3500;
+            5'd0:   chosen_multi_data = multi_350 ;
+            5'd1:   chosen_multi_data = multi_300 ;
+            5'd2:   chosen_multi_data = multi_400 ;
+            5'd3:   chosen_multi_data = multi_450 ;
+            5'd4:   chosen_multi_data = multi_500 ;
+            5'd5:   chosen_multi_data = multi_560 ;
+            5'd6:   chosen_multi_data = multi_620 ;
+            5'd7:   chosen_multi_data = multi_680 ;
+            5'd8:   chosen_multi_data = multi_750 ;
+            5'd9:   chosen_multi_data = multi_820 ;
+            5'd10:  chosen_multi_data = multi_888 ;
+            5'd11:  chosen_multi_data = multi_964 ;
+            5'd12:  chosen_multi_data = multi_1040;
+            5'd13:  chosen_multi_data = multi_1125;
+            5'd14:  chosen_multi_data = multi_1212;
+            5'd15:  chosen_multi_data = multi_1300;
+            5'd16:  chosen_multi_data = multi_1400;
+            5'd17:  chosen_multi_data = multi_1500;
+            5'd18:  chosen_multi_data = multi_1600;
+            5'd19:  chosen_multi_data = multi_1700;
+            5'd20:  chosen_multi_data = multi_1820;
+            5'd21:  chosen_multi_data = multi_1944;
+            5'd22:  chosen_multi_data = multi_2070;
+            5'd23:  chosen_multi_data = multi_2200;
+            5'd24:  chosen_multi_data = multi_2340;
+            5'd25:  chosen_multi_data = multi_2480;
+            5'd26:  chosen_multi_data = multi_2630;
+            5'd27:  chosen_multi_data = multi_2800;
+            5'd28:  chosen_multi_data = multi_3000;
+            5'd29:  chosen_multi_data = multi_3130;
+            5'd30:  chosen_multi_data = multi_3300;
+            5'd31:  chosen_multi_data = multi_3500;
             
         endcase
     end
@@ -278,85 +257,11 @@ module AudDSP(
         endcase
     end
 
-    // //carrier chosen
-    //     always_comb begin
-    //     case(i_shift[5:1]) 
-    //         5'd0:   chosen_carrier_filter_data = carrier_audio_out_300Hz;
-    //         5'd1:   chosen_carrier_filter_data = carrier_audio_out_350Hz;
-    //         5'd2:   chosen_carrier_filter_data = carrier_audio_out_400Hz;
-    //         5'd3:   chosen_carrier_filter_data = carrier_audio_out_450Hz;
-    //         5'd4:   chosen_carrier_filter_data = carrier_audio_out_500Hz;
-    //         5'd5:   chosen_carrier_filter_data = carrier_audio_out_560Hz;
-    //         5'd6:   chosen_carrier_filter_data = carrier_audio_out_620Hz;
-    //         5'd7:   chosen_carrier_filter_data = carrier_audio_out_680Hz;
-    //         5'd8:   chosen_carrier_filter_data = carrier_audio_out_750Hz;
-    //         5'd9:   chosen_carrier_filter_data = carrier_audio_out_820Hz;
-    //         5'd10:  chosen_carrier_filter_data = carrier_audio_out_888Hz;
-    //         5'd11:  chosen_carrier_filter_data = carrier_audio_out_964Hz;
-    //         5'd12:  chosen_carrier_filter_data = carrier_audio_out_1040Hz;
-    //         5'd13:  chosen_carrier_filter_data = carrier_audio_out_1125Hz;
-    //         5'd14:  chosen_carrier_filter_data = carrier_audio_out_1212Hz;
-    //         5'd15:  chosen_carrier_filter_data = carrier_audio_out_1300Hz;
-    //         5'd16:  chosen_carrier_filter_data = carrier_audio_out_1400Hz;
-    //         5'd17:  chosen_carrier_filter_data = carrier_audio_out_1500Hz;
-    //         5'd18:  chosen_carrier_filter_data = carrier_audio_out_1600Hz;
-    //         5'd19:  chosen_carrier_filter_data = carrier_audio_out_1700Hz;
-    //         5'd20:  chosen_carrier_filter_data = carrier_audio_out_1820Hz;
-    //         5'd21:  chosen_carrier_filter_data = carrier_audio_out_1944Hz;
-    //         5'd22:  chosen_carrier_filter_data = carrier_audio_out_2070Hz;
-    //         5'd23:  chosen_carrier_filter_data = carrier_audio_out_2200Hz;
-    //         5'd24:  chosen_carrier_filter_data = carrier_audio_out_2340Hz;
-    //         5'd25:  chosen_carrier_filter_data = carrier_audio_out_2480Hz;
-    //         5'd26:  chosen_carrier_filter_data = carrier_audio_out_2630Hz;
-    //         5'd27:  chosen_carrier_filter_data = carrier_audio_out_2800Hz;
-    //         5'd28:  chosen_carrier_filter_data = carrier_audio_out_3000Hz;
-    //         5'd29:  chosen_carrier_filter_data = carrier_audio_out_3130Hz;
-    //         5'd30:  chosen_carrier_filter_data = carrier_audio_out_3300Hz;
-    //         5'd31:  chosen_carrier_filter_data = carrier_audio_out_3500Hz;
-            
-    //     endcase
-    // end
-
-    // always_comb begin
-    //     case(i_shift[5:1]) 
-    //         5'd0:   chosen_carrier_filter_data = abs_IIR_audio_out_300Hz * carrier_audio_out_300Hz;
-    //         5'd1:   chosen_carrier_filter_data = -1*IIR_audio_out_350Hz ;
-    //         5'd2:   chosen_carrier_filter_data = IIR_audio_out_400Hz * carrier_audio_out_400Hz;
-    //         5'd3:   chosen_carrier_filter_data = multi_450[24:9];
-    //         5'd4:   chosen_carrier_filter_data = multi_450[30:15];
-    //         5'd5:   chosen_carrier_filter_data = multi_450[24:9];
-    //         5'd6:   chosen_carrier_filter_data = carrier_audio_out_620Hz;
-    //         5'd7:   chosen_carrier_filter_data = carrier_audio_out_680Hz;
-    //         5'd8:   chosen_carrier_filter_data = carrier_audio_out_750Hz;
-    //         5'd9:   chosen_carrier_filter_data = carrier_audio_out_820Hz;
-    //         5'd10:  chosen_carrier_filter_data = carrier_audio_out_888Hz;
-    //         5'd11:  chosen_carrier_filter_data = carrier_audio_out_964Hz;
-    //         5'd12:  chosen_carrier_filter_data = carrier_audio_out_1040Hz;
-    //         5'd13:  chosen_carrier_filter_data = carrier_audio_out_1125Hz;
-    //         5'd14:  chosen_carrier_filter_data = carrier_audio_out_1212Hz;
-    //         5'd15:  chosen_carrier_filter_data = carrier_audio_out_1300Hz;
-    //         5'd16:  chosen_carrier_filter_data = carrier_audio_out_1400Hz;
-    //         5'd17:  chosen_carrier_filter_data = carrier_audio_out_1500Hz;
-    //         5'd18:  chosen_carrier_filter_data = carrier_audio_out_1600Hz;
-    //         5'd19:  chosen_carrier_filter_data = carrier_audio_out_1700Hz;
-    //         5'd20:  chosen_carrier_filter_data = carrier_audio_out_1820Hz;
-    //         5'd21:  chosen_carrier_filter_data = carrier_audio_out_1944Hz;
-    //         5'd22:  chosen_carrier_filter_data = carrier_audio_out_2070Hz;
-    //         5'd23:  chosen_carrier_filter_data = carrier_audio_out_2200Hz;
-    //         5'd24:  chosen_carrier_filter_data = carrier_audio_out_2340Hz;
-    //         5'd25:  chosen_carrier_filter_data = carrier_audio_out_2480Hz;
-    //         5'd26:  chosen_carrier_filter_data = carrier_audio_out_2630Hz;
-    //         5'd27:  chosen_carrier_filter_data = carrier_audio_out_2800Hz;
-    //         5'd28:  chosen_carrier_filter_data = carrier_audio_out_3000Hz;
-    //         5'd29:  chosen_carrier_filter_data = carrier_audio_out_3130Hz;
-    //         5'd30:  chosen_carrier_filter_data = carrier_audio_out_3300Hz;
-    //         5'd31:  chosen_carrier_filter_data = carrier_audio_out_3500Hz;
-            
-    //     endcase
-    // end
 
 //absoulute & mac part
+
     //absolute
+
     assign abs_IIR_audio_out_300Hz = (IIR_audio_out_300Hz[15]==1)? -1*IIR_audio_out_300Hz : IIR_audio_out_300Hz;
     assign abs_IIR_audio_out_350Hz = (IIR_audio_out_350Hz[15]==1)? -1*IIR_audio_out_350Hz : IIR_audio_out_350Hz;
     assign abs_IIR_audio_out_400Hz = (IIR_audio_out_400Hz[15]==1)? -1*IIR_audio_out_400Hz : IIR_audio_out_400Hz;
@@ -389,40 +294,6 @@ module AudDSP(
     assign abs_IIR_audio_out_3130Hz = (IIR_audio_out_3130Hz[15]==1)? -1*IIR_audio_out_3130Hz : IIR_audio_out_3130Hz;
     assign abs_IIR_audio_out_3300Hz = (IIR_audio_out_3300Hz[15]==1)? -1*IIR_audio_out_3300Hz : IIR_audio_out_3300Hz;
     assign abs_IIR_audio_out_3500Hz = (IIR_audio_out_3500Hz[15]==1)? -1*IIR_audio_out_3500Hz : IIR_audio_out_3500Hz;
-
-
-    logic signed [15:0] result;
-    assign result = abs_IIR_audio_out_300Hz * carrier_audio_out_300Hz +
-                    abs_IIR_audio_out_400Hz * carrier_audio_out_400Hz +
-                    abs_IIR_audio_out_450Hz * carrier_audio_out_450Hz +
-                    abs_IIR_audio_out_500Hz * carrier_audio_out_500Hz +
-                    abs_IIR_audio_out_560Hz * carrier_audio_out_560Hz +
-                    abs_IIR_audio_out_620Hz * carrier_audio_out_620Hz +
-                    abs_IIR_audio_out_680Hz * carrier_audio_out_680Hz +
-                    abs_IIR_audio_out_750Hz * carrier_audio_out_750Hz +
-                    abs_IIR_audio_out_820Hz * carrier_audio_out_820Hz +
-                    abs_IIR_audio_out_888Hz * carrier_audio_out_888Hz +
-                    abs_IIR_audio_out_964Hz * carrier_audio_out_964Hz +
-                    abs_IIR_audio_out_1040Hz * carrier_audio_out_1040Hz +
-                    abs_IIR_audio_out_1125Hz * carrier_audio_out_1125Hz +
-                    abs_IIR_audio_out_1212Hz * carrier_audio_out_1212Hz +
-                    abs_IIR_audio_out_1300Hz * carrier_audio_out_1300Hz +
-                    abs_IIR_audio_out_1400Hz * carrier_audio_out_1400Hz +
-                    abs_IIR_audio_out_1500Hz * carrier_audio_out_1500Hz +
-                    abs_IIR_audio_out_1600Hz * carrier_audio_out_1600Hz +
-                    abs_IIR_audio_out_1700Hz * carrier_audio_out_1700Hz +
-                    abs_IIR_audio_out_1820Hz * carrier_audio_out_1820Hz +
-                    abs_IIR_audio_out_1944Hz * carrier_audio_out_1944Hz +
-                    abs_IIR_audio_out_2070Hz * carrier_audio_out_2070Hz +
-                    abs_IIR_audio_out_2200Hz * carrier_audio_out_2200Hz +
-                    abs_IIR_audio_out_2340Hz * carrier_audio_out_2340Hz +
-                    abs_IIR_audio_out_2480Hz * carrier_audio_out_2480Hz +
-                    abs_IIR_audio_out_2630Hz * carrier_audio_out_2630Hz +
-                    abs_IIR_audio_out_2800Hz * carrier_audio_out_2800Hz +
-                    abs_IIR_audio_out_3000Hz * carrier_audio_out_3000Hz +
-                    abs_IIR_audio_out_3130Hz * carrier_audio_out_3130Hz +
-                    abs_IIR_audio_out_3300Hz * carrier_audio_out_3300Hz +
-                    abs_IIR_audio_out_3500Hz * carrier_audio_out_3500Hz;
 
 
 
