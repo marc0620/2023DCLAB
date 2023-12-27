@@ -19,49 +19,21 @@ module IIR(
 
     // audio_in is 16-bit signed, and refresh when lrclk_negedge
     logic signed [15:0] x_in_D1,x_in_D2;
-    logic signed [36:0] y_out, y_out_D1, y_out_D2, raw_answer;
-    // The filter is a "Direct Form II Transposed"
-    // 
-    //    a(1)*y(n) = b(1)*x(n) + b(2)*x(n-1) + ... + b(nb+1)*x(n-nb)
-    //                          - a(2)*y(n-1) - ... - a(na+1)*y(n-na)
-    // 
-    //    If a(1) is not equal to 1, FILTER normalizes the filter
-    //    coefficients by a(1). 
-    //
-    logic signed [36:0] x_n_b_1,x_n_1_b_2,x_n_2_b_3,y_n_a_2,y_n_1_a_3;
-    assign x_n_b_1 = x_in * b1; //34-bit signed
-    assign x_n_1_b_2 = x_in_D1 * b2;
-    assign x_n_2_b_3 = x_in_D2 * b3;
-    assign y_n_a_2 = y_out_D1 * a2;
-    assign y_n_1_a_3 = y_out_D2 * a3;
+    logic signed [40:0] y_out, y_out_D1, y_out_D2, raw_answer;
+    logic signed [40:0] answer;
 
-
-
-
-
-    //assign answer = x_n_b_1 + x_n_1_b_2 + x_n_2_b_3 - y_n_a_2 - y_n_1_a_3;
-    logic signed [36:0] answer;
-    assign answer = x_n_b_1 + x_n_1_b_2 + x_n_2_b_3 + y_n_a_2 + y_n_1_a_3;
-    assign y_out = answer >>> 16;
-
-    
-
-    // assign audio_out = {answer[35], answer[32:16]}; //same as to left shift 2^16; truncate answer_r[15:0]
-    logic [36:0] shifted_before_out;
-    assign shifted_before_out = raw_answer >>> 15;
-    assign audio_out = shifted_before_out[15:0];
-        always_ff @(posedge clk or negedge i_rst_n) begin
+    always_ff @(posedge clk or negedge i_rst_n) begin
         if(~i_rst_n) begin
-            x_in_D1 <= 16'b0;
-            x_in_D2 <= 16'b0;
+            x_in_D1 <=  0;
+            x_in_D2 <= 0;
             y_out_D1 <= 0;
             y_out_D2 <= 0;
             raw_answer <= 0;
         end
         else begin
             if(~i_valid) begin
-                x_in_D1 <= 16'b0;
-                x_in_D2 <= 16'b0;
+                x_in_D1 <= 0;
+                x_in_D2 <= 0;
                 y_out_D1 <= 0;
                 y_out_D2 <= 0;
                 raw_answer <= 0;
@@ -84,6 +56,36 @@ module IIR(
             end
         end
     end
+
+    // The filter is a "Direct Form II Transposed"
+    // 
+    //    a(1)*y(n) = b(1)*x(n) + b(2)*x(n-1) + ... + b(nb+1)*x(n-nb)
+    //                          - a(2)*y(n-1) - ... - a(na+1)*y(n-na)
+    // 
+    //    If a(1) is not equal to 1, FILTER normalizes the filter
+    //    coefficients by a(1). 
+    //
+    logic signed [40:0] x_n_b_1,x_n_1_b_2,x_n_2_b_3,y_n_a_2,y_n_1_a_3;
+    assign x_n_b_1 = (x_in * b1)<<<4 ; //34-bit signed
+    assign x_n_1_b_2 = (x_in_D1 * b2)<<<4;
+    assign x_n_2_b_3 = (x_in_D2 * b3)<<<4;
+    assign y_n_a_2 = y_out_D1 * a2;
+    assign y_n_1_a_3 = y_out_D2 * a3;
+
+
+
+
+
+    //assign answer = x_n_b_1 + x_n_1_b_2 + x_n_2_b_3 - y_n_a_2 - y_n_1_a_3;
+    
+    assign answer = x_n_b_1 + x_n_1_b_2 + x_n_2_b_3 + y_n_a_2 + y_n_1_a_3;
+    assign y_out = answer >>> 16;
+    
+
+    // assign audio_out = {answer[35], answer[32:16]}; //same as to left shift 2^16; truncate answer_r[15:0]
+    logic signed [40:0] shifted_before_out;
+    assign shifted_before_out = raw_answer >>> 15;
+    assign audio_out = {shifted_before_out[40],shifted_before_out[18:4]};
 
     
     

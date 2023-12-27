@@ -15,7 +15,25 @@ module IIR_300Hz(
     output signed [15:0] audio_out
 );
 
-    
+    logic signed [15:0] first_filter_out;
+    logic signed [15:0] second_filter_out;
+    logic i_valid_d1_w,i_valid_d1_r,i_valid_d2_w,i_valid_d2_r;
+
+    always_comb begin
+        i_valid_d1_w = i_valid;
+        i_valid_d2_w = i_valid_d1_r;
+    end
+
+    always_ff @(posedge lrclk_posedge or negedge i_rst_n) begin
+        if(!i_rst_n) begin
+            i_valid_d1_r <= 0;
+            i_valid_d2_r <= 0;
+        end
+        else begin
+            i_valid_d1_r <= i_valid_d1_w;
+            i_valid_d2_r <= i_valid_d2_w;
+        end
+    end
 
     IIR filter_300Hz(
         .clk(clk),
@@ -31,4 +49,21 @@ module IIR_300Hz(
         .a3(a3),
         .audio_out(audio_out)
     );
+
+//    IIR dc_filter(
+//        .clk(clk),
+//        .i_rst_n(i_rst_n),
+//        .lrclk_negedge(lrclk_negedge),
+//        .lrclk_posedge(lrclk_posedge),
+//        .i_valid(i_valid_d2_r),
+//        .x_in(first_filter_out<<<3),
+//        .b1(18'sd65536),
+//        .b2(-18'sd65536),
+//        .b3(18'sd0),
+//        .a2(18'sd64000),
+//        .a3(18'sd0),
+//        .audio_out(second_filter_out)
+//    );
+//assign audio_out = second_filter_out>>>3;
+
 endmodule
