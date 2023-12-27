@@ -206,6 +206,7 @@ Top top0(
 	.i_clk(CLK_12M),
 	.i_key_1(key1down),
 	.i_shift(SW[17:11]),
+	.i_bit_test(SW[10:0]),
 	.o_leds(LEDG),
 	// I2C
 	.i_clk_100k(CLK_100K),

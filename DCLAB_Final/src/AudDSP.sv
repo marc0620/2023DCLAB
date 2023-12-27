@@ -4,6 +4,7 @@ module AudDSP(
 	input i_start,
 	input i_daclrck,
 	input [6:0] i_shift,
+    input [10:0] i_bit_test,
 	input [15:0] i_sram_data,
     input [15:0] carrier_data,
 	output[15:0] o_dac_data
@@ -42,11 +43,12 @@ module AudDSP(
     //     endcase
     // end
     logic signed [15:0] chosen_multi_data;
+    logic signed [15:0] chosen_added_all;
     always_comb begin
         case({i_shift[6],i_shift[0]})
-            2'd0:    chosen_data = carrier_data;
+            2'd0:    chosen_data = i_sram_data;
             2'd1:    chosen_data = chosen_multi_data;
-            2'd2:    chosen_data = added_all[20:5];
+            2'd2:    chosen_data = chosen_added_all;
             default: chosen_data = chosen_filter_data;
         endcase
     end
@@ -91,6 +93,7 @@ module AudDSP(
     end
 
     logic signed [31:0] multi_300, multi_350, multi_400, multi_450, multi_500, multi_560, multi_620, multi_680, multi_750, multi_820, multi_888, multi_964, multi_1040, multi_1125, multi_1212, multi_1300, multi_1400, multi_1500, multi_1600, multi_1700, multi_1820, multi_1944, multi_2070, multi_2200, multi_2340, multi_2480, multi_2630, multi_2800, multi_3000, multi_3130, multi_3300, multi_3500;
+    logic signed [15:0] multi_trun_300, multi_trun_350, multi_trun_400, multi_trun_450, multi_trun_500, multi_trun_560, multi_trun_620, multi_trun_680, multi_trun_750, multi_trun_820, multi_trun_888, multi_trun_964, multi_trun_1040, multi_trun_1125, multi_trun_1212, multi_trun_1300, multi_trun_1400, multi_trun_1500, multi_trun_1600, multi_trun_1700, multi_trun_1820, multi_trun_1944, multi_trun_2070, multi_trun_2200, multi_trun_2340, multi_trun_2480, multi_trun_2630, multi_trun_2800, multi_trun_3000, multi_trun_3130, multi_trun_3300, multi_trun_3500;
     assign multi_300 = abs_IIR_audio_out_300Hz * carrier_audio_out_300Hz;
     assign multi_350 = abs_IIR_audio_out_350Hz * carrier_audio_out_350Hz;
     assign multi_400 = abs_IIR_audio_out_400Hz * carrier_audio_out_400Hz;
@@ -123,47 +126,114 @@ module AudDSP(
     assign multi_3130 = abs_IIR_audio_out_3130Hz * carrier_audio_out_3130Hz;
     assign multi_3300 = abs_IIR_audio_out_3300Hz * carrier_audio_out_3300Hz;
     assign multi_3500 = abs_IIR_audio_out_3500Hz * carrier_audio_out_3500Hz;
-
-    logic signed [20:0] added_all;
     
-    assign added_all = multi_300[24:9] + multi_350[24:9] + multi_400[24:9] + multi_450[24:9] + multi_500[24:9] + multi_560[24:9] + multi_620[24:9] + multi_680[24:9] + multi_750[24:9] + multi_820[24:9] + multi_888[24:9] + multi_964[24:9] + multi_1040[24:9] + multi_1125[24:9] + multi_1212[24:9] + multi_1300[24:9] + multi_1400[24:9] + multi_1500[24:9] + multi_1600[24:9] + multi_1700[24:9] + multi_1820[24:9] + multi_1944[24:9] + multi_2070[24:9] + multi_2200[24:9] + multi_2340[24:9] + multi_2480[24:9] + multi_2630[24:9] + multi_2800[24:9] + multi_3000[24:9] + multi_3130[24:9] + multi_3300[24:9] + multi_3500[24:9];
+    // assign multi_trun_350 = {multi_350[31],multi_350[25:11]};
+    // assign multi_trun_300 = {multi_300[31],multi_300[25:11]};
+    // assign multi_trun_400 = {multi_400[31],multi_400[25:11]};
+    // assign multi_trun_450 = {multi_450[31],multi_450[25:11]};
+    // assign multi_trun_500 = {multi_500[31],multi_500[25:11]};
+    // assign multi_trun_560 = {multi_560[31],multi_560[25:11]};
+    // assign multi_trun_620 = {multi_620[31],multi_620[25:11]};
+    // assign multi_trun_680 = {multi_680[31],multi_680[25:11]};
+    // assign multi_trun_750 = {multi_750[31],multi_750[25:11]};
+    // assign multi_trun_820 = {multi_820[31],multi_820[25:11]};
+    // assign multi_trun_888 = {multi_888[31],multi_888[25:11]};
+    // assign multi_trun_964 = {multi_964[31],multi_964[25:11]};
+    // assign multi_trun_1040 = {multi_1040[31],multi_1040[25:11]};
+    // assign multi_trun_1125 = {multi_1125[31],multi_1125[25:11]};
+    // assign multi_trun_1212 = {multi_1212[31],multi_1212[25:11]};
+    // assign multi_trun_1300 = {multi_1300[31],multi_1300[25:11]};
+    // assign multi_trun_1400 = {multi_1400[31],multi_1400[25:11]};
+    // assign multi_trun_1500 = {multi_1500[31],multi_1500[25:11]};
+    // assign multi_trun_1600 = {multi_1600[31],multi_1600[25:11]};
+    // assign multi_trun_1700 = {multi_1700[31],multi_1700[25:11]};
+    // assign multi_trun_1820 = {multi_1820[31],multi_1820[25:11]};
+    // assign multi_trun_1944 = {multi_1944[31],multi_1944[25:11]};
+    // assign multi_trun_2070 = {multi_2070[31],multi_2070[25:11]};
+    // assign multi_trun_2200 = {multi_2200[31],multi_2200[25:11]};
+    // assign multi_trun_2340 = {multi_2340[31],multi_2340[25:11]};
+    // assign multi_trun_2480 = {multi_2480[31],multi_2480[25:11]};
+    // assign multi_trun_2630 = {multi_2630[31],multi_2630[25:11]};
+    // assign multi_trun_2800 = {multi_2800[31],multi_2800[25:11]};
+    // assign multi_trun_3000 = {multi_3000[31],multi_3000[25:11]};
+    // assign multi_trun_3130 = {multi_3130[31],multi_3130[25:11]};
+    // assign multi_trun_3300 = {multi_3300[31],multi_3300[25:11]};
+    // assign multi_trun_3500 = {multi_3500[31],multi_3500[25:11]};
 
+    logic signed [36:0] add_all_32;
+    logic signed [36:0] added_all_16;
+    logic signed [36:0] added_all_8;
+    logic signed [36:0] added_all_4;
+    logic signed [36:0] added_all_2;
+
+    // //add_all_32 is add all multi_trun
+    // assign add_all_32 = multi_trun_300+multi_trun_350+multi_trun_400+multi_trun_450+multi_trun_500+multi_trun_560+multi_trun_620+multi_trun_680+multi_trun_750+multi_trun_820+multi_trun_888+multi_trun_964+multi_trun_1040+multi_trun_1125+multi_trun_1212+multi_trun_1300+multi_trun_1400+multi_trun_1500+multi_trun_1600+multi_trun_1700+multi_trun_1820+multi_trun_1944+multi_trun_2070+multi_trun_2200+multi_trun_2340+multi_trun_2480+multi_trun_2630+multi_trun_2800+multi_trun_3000+multi_trun_3130+multi_trun_3300+multi_trun_3500;
+    // //add_all_16 is add all multi_trun
+    // assign add_all_16 = multi_trun_300+multi_trun_350+multi_trun_400+multi_trun_450+multi_trun_500+multi_trun_560+multi_trun_620+multi_trun_680+multi_trun_750+multi_trun_820+multi_trun_888+multi_trun_964+multi_trun_1040+multi_trun_1125+multi_trun_1212+multi_trun_1300;
+    // //add_all_8 is add all multi_trun
+    // assign add_all_8 = multi_trun_300+multi_trun_350+multi_trun_400+multi_trun_450+multi_trun_500+multi_trun_560+multi_trun_620+multi_trun_680;
+    // //add_all_4 is add all multi_trun
+    // assign add_all_4 = multi_trun_300+multi_trun_350+multi_trun_400+multi_trun_450;
+    // //add_all_2 is add all multi_trun
+    // assign add_all_2 = multi_trun_300+multi_trun_350;
+
+    assign add_all_32 = multi_300+multi_350+multi_400+multi_450+multi_500+multi_560+multi_620+multi_680+multi_750+multi_820+multi_888+multi_964+multi_1040+multi_1125+multi_1212+multi_1300+multi_1400+multi_1500+multi_1600+multi_1700+multi_1820+multi_1944+multi_2070+multi_2200+multi_2340+multi_2480+multi_2630+multi_2800+multi_3000+multi_3130+multi_3300+multi_3500;
+
+
+    always_comb begin
+        case(i_bit_test)
+            11'b00000000001:   chosen_added_all = {add_all_32[36],add_all_32[30:16]};
+            11'b00000000010:   chosen_added_all = {add_all_32[36],add_all_32[29:15]};
+            11'b00000000100:   chosen_added_all = {add_all_32[36],add_all_32[28:14]};
+            11'b00000001000:   chosen_added_all = {add_all_32[36],add_all_32[27:13]};
+            11'b00000010000:   chosen_added_all = {add_all_32[36],add_all_32[26:12]};
+            11'b00000100000:   chosen_added_all = {add_all_32[36],add_all_32[25:11]};
+            11'b00001000000:   chosen_added_all = {add_all_32[36],add_all_32[24:10]};
+            11'b00010000000:   chosen_added_all = {add_all_32[36],add_all_32[23:9]};
+            11'b00100000000:   chosen_added_all = {add_all_32[36],add_all_32[22:8]};
+            11'b01000000000:   chosen_added_all = {add_all_32[36],add_all_32[21:7]};
+            11'b10000000000:   chosen_added_all = {add_all_32[36],add_all_32[20:6]};
+            default: chosen_added_all = {add_all_32[36],add_all_32[19:5]};  
+            // 11'b00000100000:   chosen_added_all = add_all_
+            // default: chosen_added_all = multi_trun_300;
+        endcase
+    end
 
 
      always_comb begin
         case(i_shift[5:1]) 
-            5'd0:   chosen_multi_data = multi_300[24:9];  
-            5'd1:   chosen_multi_data = multi_350[24:9];  
-            5'd2:   chosen_multi_data = multi_400[24:9];  
-            5'd3:   chosen_multi_data = multi_450[24:9];
-            5'd4:   chosen_multi_data = multi_500[24:9];
-            5'd5:   chosen_multi_data = multi_560[24:9];
-            5'd6:   chosen_multi_data = multi_620[24:9];
-            5'd7:   chosen_multi_data = multi_680[24:9];
-            5'd8:   chosen_multi_data = multi_750[24:9];
-            5'd9:   chosen_multi_data = multi_820[24:9];  
-            5'd10:  chosen_multi_data = multi_888[24:9];
-            5'd11:  chosen_multi_data = multi_964[24:9];
-            5'd12:  chosen_multi_data = multi_1040[24:9];
-            5'd13:  chosen_multi_data = multi_1125[24:9];
-            5'd14:  chosen_multi_data = multi_1212[24:9];
-            5'd15:  chosen_multi_data = multi_1300[24:9];
-            5'd16:  chosen_multi_data = multi_1400[24:9];
-            5'd17:  chosen_multi_data = multi_1500[24:9];
-            5'd18:  chosen_multi_data = multi_1600[24:9];
-            5'd19:  chosen_multi_data = multi_1700[24:9];
-            5'd20:  chosen_multi_data = multi_1820[24:9];
-            5'd21:  chosen_multi_data = multi_1944[24:9];
-            5'd22:  chosen_multi_data = multi_2070[24:9];
-            5'd23:  chosen_multi_data = multi_2200[24:9];
-            5'd24:  chosen_multi_data = multi_2340[24:9];
-            5'd25:  chosen_multi_data = multi_2480[24:9];
-            5'd26:  chosen_multi_data = multi_2630[24:9];
-            5'd27:  chosen_multi_data = multi_2800[24:9];
-            5'd28:  chosen_multi_data = multi_3000[24:9];
-            5'd29:  chosen_multi_data = multi_3130[24:9];
-            5'd30:  chosen_multi_data = multi_3300[24:9];
-            5'd31:  chosen_multi_data = multi_3500[24:9];
+            5'd0:   chosen_multi_data = multi_trun_350 ;
+            5'd1:   chosen_multi_data = multi_trun_300 ;
+            5'd2:   chosen_multi_data = multi_trun_400 ;
+            5'd3:   chosen_multi_data = multi_trun_450 ;
+            5'd4:   chosen_multi_data = multi_trun_500 ;
+            5'd5:   chosen_multi_data = multi_trun_560 ;
+            5'd6:   chosen_multi_data = multi_trun_620 ;
+            5'd7:   chosen_multi_data = multi_trun_680 ;
+            5'd8:   chosen_multi_data = multi_trun_750 ;
+            5'd9:   chosen_multi_data = multi_trun_820 ;
+            5'd10:  chosen_multi_data = multi_trun_888 ;
+            5'd11:  chosen_multi_data = multi_trun_964 ;
+            5'd12:  chosen_multi_data = multi_trun_1040;
+            5'd13:  chosen_multi_data = multi_trun_1125;
+            5'd14:  chosen_multi_data = multi_trun_1212;
+            5'd15:  chosen_multi_data = multi_trun_1300;
+            5'd16:  chosen_multi_data = multi_trun_1400;
+            5'd17:  chosen_multi_data = multi_trun_1500;
+            5'd18:  chosen_multi_data = multi_trun_1600;
+            5'd19:  chosen_multi_data = multi_trun_1700;
+            5'd20:  chosen_multi_data = multi_trun_1820;
+            5'd21:  chosen_multi_data = multi_trun_1944;
+            5'd22:  chosen_multi_data = multi_trun_2070;
+            5'd23:  chosen_multi_data = multi_trun_2200;
+            5'd24:  chosen_multi_data = multi_trun_2340;
+            5'd25:  chosen_multi_data = multi_trun_2480;
+            5'd26:  chosen_multi_data = multi_trun_2630;
+            5'd27:  chosen_multi_data = multi_trun_2800;
+            5'd28:  chosen_multi_data = multi_trun_3000;
+            5'd29:  chosen_multi_data = multi_trun_3130;
+            5'd30:  chosen_multi_data = multi_trun_3300;
+            5'd31:  chosen_multi_data = multi_trun_3500;
             
         endcase
     end

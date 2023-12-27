@@ -3,6 +3,7 @@ module Top (
 	input i_clk,
 	input i_key_1,
 	input [6:0] i_shift,
+	input [10:0] i_bit_test,
 	output [8:0]  o_leds,
 	// I2C
 	input  i_clk_100k,
@@ -114,6 +115,7 @@ AudDSP dsp0(
 	.i_sram_data(pseudo_SRAM),
     .carrier_data(carrier_data),
 	.i_shift(i_shift),
+	.i_bit_test(i_bit_test),
 	.o_dac_data(dac_data)
 );
 

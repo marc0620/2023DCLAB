@@ -84,7 +84,7 @@ module IIR(
 
     // assign audio_out = {answer[35], answer[32:16]}; //same as to left shift 2^16; truncate answer_r[15:0]
     logic signed [44:0] shifted_before_out;
-    assign shifted_before_out = raw_answer >>> 23;
+    assign shifted_before_out = raw_answer >>> 24;
     assign audio_out = {shifted_before_out[44],shifted_before_out[19:0]};
 
     
