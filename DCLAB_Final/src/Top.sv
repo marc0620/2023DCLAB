@@ -5,18 +5,6 @@ module Top (
 	input i_key_1,
 	input i_key_2,
 	input [6:0] i_shift,
-	// AudDSP and SRAM
-	//output [25:0] o_D_addr,
-	//output [15:0] o_D_wdata,
-	//input [15:0] i_D_rdata,
-	//output o_D_we_n,
-	output [19:0] o_SRAM_ADDR,
-	inout  [15:0] io_SRAM_DQ,
-	output        o_SRAM_WE_N,
-	output        o_SRAM_CE_N,
-	output        o_SRAM_OE_N,
-	output        o_SRAM_LB_N,
-	output        o_SRAM_UB_N,
 	output [8:0]  o_leds,
 	// I2C
 	input  i_clk_100k,
@@ -56,35 +44,22 @@ module Top (
 	// design the FSM and states as you like
 	parameter S_IDLE       = 0;
 	parameter S_I2C        = 1;
-	parameter S_RECD       = 2;
-	parameter S_RECD_PAUSE = 3;
 	parameter S_PLAY       = 4;
-	parameter S_PLAY_PAUSE = 5;
 	logic[2:0] state_r, state_w;
 
 	logic i2c_oen;
 	wire  i2c_sdat;
-	logic [19:0] addr_record, addr_play, stop_addr;
 	logic [15:0] data_record, data_play;
 	logic [15:0] dac_data;
 
 	logic i2c_start, i2c_fin, i2c_state;
 	logic player_enable;
-	logic rec_start,rec_start_next,rec_stop,rec_stop_next,rec_pause,rec_pause_next, dsp_start, dsp_start_next, dsp_pause, dsp_pause_next, dsp_stop, dsp_stop_next;
-	logic play_fin, rec_fin;
+	logic rec_start,rec_start_next, dsp_start, dsp_start_next;
     logic [2:0] kb_state;
     logic [31:0] key_array;
     logic signed [15:0] carrier_data;
 
 	assign io_I2C_SDAT = (i2c_oen) ? i2c_sdat : 1'bz;
-
-	//assign o_D_addr[19:0] = (state_r == S_RECD) ? addr_record : addr_play[19:0];
-	//assign o_D_addr[25:20] = 0;
-	//assign o_D_wdata = (state_r == S_RECD) ? data_record : 16'd0;
-	//assign i_data_play = (state_r != S_RECD) ? i_D_rdata : 16'd0; 
-	assign o_SRAM_ADDR = (state_r == S_RECD) ? addr_record : addr_play[19:0];
-	// assign io_SRAM_DQ  = (state_r == S_RECD) ? data_record : 16'dz; // sram_dq as output
-	// assign data_play   = (state_r != S_RECD) ? io_SRAM_DQ : 16'd0; // sram_dq as input
 
 	logic [15:0] pseudo_SRAM;
 	always_ff @(posedge i_clk or negedge i_rst_n) begin
@@ -96,13 +71,6 @@ module Top (
 		end
 	end
 
-
-	//assign o_D_we_n = (state_r == S_RECD) ? 1'b0 : 1'b1;
-	assign o_SRAM_WE_N = (state_r == S_RECD) ? 1'b0 : 1'b1;
-	assign o_SRAM_CE_N = 1'b0;
-	assign o_SRAM_OE_N = 1'b0;
-	assign o_SRAM_LB_N = 1'b0;
-	assign o_SRAM_UB_N = 1'b0;
 
 	assign play_en  = (state_w == S_PLAY);
 	assign o_state = state_r;
@@ -151,17 +119,11 @@ AudDSP dsp0(
 	.i_rst_n(i_rst_n),
 	.i_clk(i_clk),
 	.i_start(dsp_start),
-	.i_pause(dsp_pause),
-	.i_stop(dsp_stop),
 	.i_daclrck(i_AUD_DACLRCK),
 	.i_sram_data(pseudo_SRAM),
-	.i_stop_addr(addr_record),
     .carrier_data(carrier_data),
 	.i_shift(i_shift),
-	.o_dac_data(dac_data),
-	.o_sram_addr(addr_play),
-	.o_state(o_state_DSP),
-	.o_fin(play_fin)
+	.o_dac_data(dac_data)
 );
 
 // === AudPlayer ===
@@ -179,7 +141,7 @@ AudPlayer player0(
 
 	//=== LED ===
 	LEDVolume led0(
-		.i_record(state_r == S_RECD),
+		.i_record(state_r == S_PLAY),
 		.i_data(data_record),
 		.o_led_r(o_ledr)
 	);
@@ -190,20 +152,9 @@ always_comb begin
 	// design your control here
 	state_w=state_r;
 	rec_start_next=rec_start;
-	rec_stop_next=rec_stop;
-	rec_pause_next=rec_pause;
 	dsp_start_next=dsp_start;
-	dsp_pause_next=dsp_pause;
-	dsp_stop_next=dsp_stop;
 	case (state_r)
 		S_I2C: begin
-			// if(i2c_start==1'b0 && i2c_sent==1'b0) begin
-			// 	i2c_start_next=1'b1;
-			// 	i2c_sent_next=1'b1;
-			// end
-			// else if(i2c_start==1'b1) begin
-			// 	i2c_start_next=1'b0;
-			// end
 			if (i2c_fin==1'b1) begin
 				state_w=S_IDLE;
 			end
@@ -213,58 +164,16 @@ always_comb begin
 			
 		end
 		S_IDLE: begin
-			if(i_key_0==1'b1) begin
-				state_w=S_RECD;
-				rec_start_next=1'b1;
-				rec_stop_next=1'b0;
-				dsp_stop_next=1'b0;
-			end
-			else if(i_key_1==1'b1) begin
+			if(i_key_1==1'b1) begin
 				state_w=S_PLAY;
 				dsp_start_next=1'b1;
 				rec_start_next=1'b1;
-				rec_stop_next=1'b0;
-				dsp_stop_next=1'b0;
 			end
 			else begin
 				state_w=S_IDLE;
-			end
-		end
-		S_RECD: begin
-			if(i_key_2 ==1'b1 || rec_fin==1)begin  //(o_state_RECD==0 && wait_sub==7) 
-				state_w=S_IDLE;
-				rec_stop_next=1'b1;
-				rec_start_next=1'b0;
-			end
-			else if(i_key_0==1'b1) begin
-				state_w=S_RECD_PAUSE;
-				rec_pause_next=1'b1;
-				rec_start_next=1'b0;
-
-			end
-			else begin
-				state_w=S_RECD;
-			end
-		end
-		S_RECD_PAUSE: begin
-			if(i_key_2) begin
-				state_w=S_IDLE;
-				rec_stop_next=1'b1;
-				rec_pause_next=1'b0;
-
-			end
-			else if(i_key_0) begin
-				state_w=S_RECD;
-				rec_start_next=1'b1;
-				rec_pause_next=1'b0;
-
-			end
-			else begin
-				state_w=S_RECD_PAUSE;
 			end
 		end
 		S_PLAY: begin
-			dsp_stop_next=1'b0;
 			dsp_start_next=1'b0;
 			state_w=S_PLAY;
 		end
@@ -277,22 +186,14 @@ always_ff @(posedge i_clk or negedge i_rst_n) begin
 		i2c_start<=1'b1;
 		//set rec signals
 		rec_start<=1'b0;
-		rec_stop<=1'b0;
-		rec_pause<=1'b0;
 		dsp_start<=1'b0;
-		dsp_pause<=1'b0;
-		dsp_stop<=1'b0;
 	end
 	else begin
 		state_r <= state_w;
 		i2c_start<=1'b1;
 		//set rec signals
 		rec_start<=rec_start_next;
-		rec_stop<=rec_stop_next;
-		rec_pause<=rec_pause_next;
 		dsp_start<=dsp_start_next;
-		dsp_pause<=dsp_pause_next;
-		dsp_stop<=dsp_stop_next;
 
 	end
 end
