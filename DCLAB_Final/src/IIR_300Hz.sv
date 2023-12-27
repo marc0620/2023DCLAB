@@ -15,7 +15,7 @@ module IIR_300Hz(
     output signed [15:0] audio_out
 );
 
-    
+    logic signed [20:0] first_filter_out;
 
     IIR filter_300Hz(
         .clk(clk),
@@ -29,6 +29,7 @@ module IIR_300Hz(
         .b3(b3),
         .a2(a2),
         .a3(a3),
-        .audio_out(audio_out)
+        .audio_out(first_filter_out)
     );
+    assign audio_out = {first_filter_out[20],first_filter_out[14:0]};
 endmodule
