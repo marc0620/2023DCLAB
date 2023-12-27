@@ -32,6 +32,7 @@ module AudDSP(
     logic [20:0] init_count_r,init_count_w;
     logic IIR_valid;
     assign IIR_valid = i_valid;
+    // assign IIR_valid = (state_r==ACTIVE);
     assign o_led[0] =IIR_valid;
     assign o_led[1]=i_shift[0];
     assign o_led[2]=init_count_r[20];
@@ -109,6 +110,7 @@ module AudDSP(
     // IIR chosen
     always_comb begin
         case(i_shift[5:1]) 
+            // 5'd0:   chosen_filter_data = IIR_audio_out_300Hz+IIR_audio_out_350Hz+IIR_audio_out_400Hz+IIR_audio_out_450Hz+IIR_audio_out_500Hz+IIR_audio_out_560Hz+IIR_audio_out_620Hz+IIR_audio_out_680Hz+IIR_audio_out_750Hz+IIR_audio_out_820Hz+IIR_audio_out_888Hz+IIR_audio_out_964Hz+IIR_audio_out_1040Hz+IIR_audio_out_1125Hz+IIR_audio_out_1212Hz+IIR_audio_out_1300Hz+IIR_audio_out_1400Hz+IIR_audio_out_1500Hz+IIR_audio_out_1600Hz+IIR_audio_out_1700Hz+IIR_audio_out_1820Hz+IIR_audio_out_1944Hz+IIR_audio_out_2070Hz+IIR_audio_out_2200Hz+IIR_audio_out_2340Hz+IIR_audio_out_2480Hz+IIR_audio_out_2630Hz+IIR_audio_out_2800Hz+IIR_audio_out_3000Hz+IIR_audio_out_3130Hz+IIR_audio_out_3300Hz+IIR_audio_out_3500Hz;
             5'd0:   chosen_filter_data = IIR_audio_out_300Hz;
             5'd1:   chosen_filter_data = IIR_audio_out_350Hz;
             5'd2:   chosen_filter_data = IIR_audio_out_400Hz;
@@ -1261,7 +1263,7 @@ module AudDSP(
     //sequential circuit
     always_ff@(posedge i_clk or negedge i_rst_n) begin
         if(~i_rst_n) begin
-            o_dac_data_r    <= 16'bZ;
+            o_dac_data_r    <= 16'b0;
             prev_data_r     <= 16'b0;
             prev_daclrck_r  <= 1'b0;
         end
