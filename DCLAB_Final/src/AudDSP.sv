@@ -2,34 +2,22 @@ module AudDSP(
 	input i_rst_n,
 	input i_clk,
 	input i_start,
-	input i_pause,
-	input i_stop,
 	input i_daclrck,
 	input [6:0] i_shift,
 	input [15:0] i_sram_data,
     input [15:0] carrier_data,
-    input [19:0] i_stop_addr,
-	output[15:0] o_dac_data,
-	output[19:0] o_sram_addr,
-    output o_fin,
-    output [2:0] o_state
+	output[15:0] o_dac_data
 );
 
     //parameters
     localparam S_IDLE = 0;
     localparam S_PLAY = 1;
-    localparam S_PAUSE = 2;
     //localparam end_addr = 1024000;
 
     //registers and wires
     logic [1:0]  state_r, state_w;
     logic signed [15:0] o_dac_data_r, o_dac_data_w;
-    logic signed [15:0] prev_data_r, prev_data_w;
-    logic [19:0] o_sram_addr_r, o_sram_addr_w;
-    logic [3:0]  counter_r, counter_w;
-    logic [3:0]  ratio;
     logic        prev_daclrck_r, prev_daclrck_w;
-    logic o_fin_next;
 	logic signed [15:0] chosen_data,chosen_filter_data,chosen_carrier_filter_data;
 	logic signed[15:0] IIR_audio_out_300Hz,IIR_audio_out_350Hz,IIR_audio_out_400Hz,IIR_audio_out_450Hz,IIR_audio_out_500Hz,IIR_audio_out_560Hz,IIR_audio_out_620Hz,IIR_audio_out_680Hz,IIR_audio_out_750Hz,IIR_audio_out_820Hz,IIR_audio_out_888Hz,IIR_audio_out_964Hz,IIR_audio_out_1040Hz,IIR_audio_out_1125Hz,IIR_audio_out_1212Hz,IIR_audio_out_1300Hz,IIR_audio_out_1400Hz,IIR_audio_out_1500Hz,IIR_audio_out_1600Hz,IIR_audio_out_1700Hz,IIR_audio_out_1820Hz,IIR_audio_out_1944Hz,IIR_audio_out_2070Hz,IIR_audio_out_2200Hz,IIR_audio_out_2340Hz,IIR_audio_out_2480Hz,IIR_audio_out_2630Hz,IIR_audio_out_2800Hz,IIR_audio_out_3000Hz,IIR_audio_out_3130Hz,IIR_audio_out_3300Hz,IIR_audio_out_3500Hz;
     logic signed[15:0] carrier_audio_out_300Hz,carrier_audio_out_350Hz,carrier_audio_out_400Hz,carrier_audio_out_450Hz,carrier_audio_out_500Hz,carrier_audio_out_560Hz,carrier_audio_out_620Hz,carrier_audio_out_680Hz,carrier_audio_out_750Hz,carrier_audio_out_820Hz,carrier_audio_out_888Hz,carrier_audio_out_964Hz,carrier_audio_out_1040Hz,carrier_audio_out_1125Hz,carrier_audio_out_1212Hz,carrier_audio_out_1300Hz,carrier_audio_out_1400Hz,carrier_audio_out_1500Hz,carrier_audio_out_1600Hz,carrier_audio_out_1700Hz,carrier_audio_out_1820Hz,carrier_audio_out_1944Hz,carrier_audio_out_2070Hz,carrier_audio_out_2200Hz,carrier_audio_out_2340Hz,carrier_audio_out_2480Hz,carrier_audio_out_2630Hz,carrier_audio_out_2800Hz,carrier_audio_out_3000Hz,carrier_audio_out_3130Hz,carrier_audio_out_3300Hz,carrier_audio_out_3500Hz;
@@ -41,26 +29,11 @@ module AudDSP(
     assign lrclk_posedge = (~prev_daclrck_r) && i_daclrck;
     assign lrclk_negedge = prev_daclrck_r && (~i_daclrck);
 
-    //assign ratio = signed'(counter_r)/signed'(i_speed);
 	
     //output
     assign o_dac_data=o_dac_data_r;
-    assign o_sram_addr = o_sram_addr_w;
     assign o_state=state_r;
     //combinational circuit
-
-    // Testing delay sram_data
-    logic [15:0] sram_data_D1, sram_data_D2;
-    always_ff@(posedge i_clk or negedge i_rst_n) begin
-        if(~i_rst_n) begin
-            sram_data_D1 <= 16'b0;
-            sram_data_D2 <= 16'b0;
-        end
-        else begin
-            sram_data_D1 <= i_sram_data;
-            sram_data_D2 <= sram_data_D1;
-        end
-    end
 	
 	// always_comb begin
     //     case(i_shift[0])
@@ -385,70 +358,24 @@ module AudDSP(
 
     always_comb begin
         prev_daclrck_w = i_daclrck;
-        o_fin_next=o_fin;
         case(state_r)
             S_IDLE: begin
-                o_fin_next=0;
                 if(i_start) begin
                     state_w = S_PLAY;
                     o_dac_data_w = chosen_data;
-                    o_sram_addr_w = o_sram_addr_r;
-                    prev_data_w = 16'd0;
-                    counter_w = 4'd0;
                 end
                 else begin
                     state_w = S_IDLE;
                     o_dac_data_w = 16'bZ;
-                    o_sram_addr_w = 20'd0;
-                    prev_data_w = 16'b0;
-                    counter_w = 4'd0;
                 end
             end
             S_PLAY: begin
-                if(i_pause) begin
-                    state_w = S_PAUSE;
-                    o_dac_data_w = 16'bZ;
-                    o_sram_addr_w = o_sram_addr_r;
-                    prev_data_w = prev_data_r;
-                    counter_w = counter_r;
-                end
-                else begin
-                    state_w = S_PLAY;
-                    o_dac_data_w = chosen_data;
-                    o_sram_addr_w = lrclk_negedge? (o_sram_addr_r + 20'd1) : o_sram_addr_r;
-                    prev_data_w = 16'b0;
-                    counter_w = 4'd0;
-                end
-            end
-            S_PAUSE: begin
-                if(i_start) begin
-                    state_w = S_PLAY;
-                    o_dac_data_w = 16'bZ;
-                    o_sram_addr_w = o_sram_addr_r;
-                    prev_data_w = prev_data_r;
-                    counter_w = counter_r;
-                end
-                else if(i_stop) begin
-                    state_w = S_IDLE;
-                    o_dac_data_w = 16'bZ;
-                    o_sram_addr_w = 20'd0;
-                    prev_data_w = 16'b0;
-                    counter_w = 4'd0;
-                end
-                else begin
-                    state_w = S_PAUSE;
-                    o_dac_data_w = 16'bZ;
-                    o_sram_addr_w = o_sram_addr_r;
-                    prev_data_w = prev_data_r;
-                    counter_w = counter_r;
-                end
+                state_w = S_PLAY;
+                o_dac_data_w = chosen_data;
             end
             default: begin
                 state_w = state_r;
                 o_dac_data_w = 16'bZ;
-                o_sram_addr_w = o_sram_addr_r;
-                prev_data_w = prev_data_r;
-                counter_w = counter_r;
             end
         endcase
     end
@@ -459,20 +386,26 @@ module AudDSP(
             IIR_valid <= 1'b0;
         end
         else begin
-            // i_start make valid 0->1
-            // i_stop make valid 1->0
             if(i_start) begin
                 IIR_valid <= 1'b1;
-            end
-            else if(i_stop) begin
-                IIR_valid <= 1'b0;
             end
             else begin
                 IIR_valid <= IIR_valid;
             end
         end
     end
-
+    always_ff@(posedge i_clk or negedge i_rst_n) begin
+        if(~i_rst_n) begin
+            state_r         <= S_IDLE;
+            o_dac_data_r    <= 16'bZ;
+            prev_daclrck_r  <= 1'b0;
+        end
+        else begin
+            state_r         <= state_w;
+            o_dac_data_r    <= o_dac_data_w;
+            prev_daclrck_r  <= prev_daclrck_w;
+        end
+    end
     IIR_300Hz filter_300(
         .clk(i_clk),
         .i_rst_n(i_rst_n),
@@ -1437,25 +1370,6 @@ module AudDSP(
     );
 	 
     //sequential circuit
-    always_ff@(posedge i_clk or negedge i_rst_n) begin
-        if(~i_rst_n) begin
-            state_r         <= S_IDLE;
-            o_dac_data_r    <= 16'bZ;
-            o_sram_addr_r   <= 20'd0;
-            prev_data_r     <= 16'b0;
-            counter_r       <= 4'd0;
-            prev_daclrck_r  <= 1'b0;
-            o_fin<=1'b0;
-        end
-        else begin
-            state_r         <= state_w;
-            o_dac_data_r    <= o_dac_data_w;
-            o_sram_addr_r   <= o_sram_addr_w;
-            prev_data_r     <= prev_data_w;
-            counter_r       <= counter_w;
-            prev_daclrck_r  <= prev_daclrck_w;
-            o_fin<=o_fin_next;
-        end
-    end
+
 
 endmodule
