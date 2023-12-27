@@ -55,7 +55,6 @@ module IIR(
             end
         end
     end
-
     // The filter is a "Direct Form II Transposed"
     // 
     //    a(1)*y(n) = b(1)*x(n) + b(2)*x(n-1) + ... + b(nb+1)*x(n-nb)
@@ -82,10 +81,10 @@ module IIR(
 
     
 
-    // assign audio_out = {answer[35], answer[32:16]}; //same as to left shift 2^16; truncate answer_r[15:0]
+
     logic [36:0] shifted_before_out;
     assign shifted_before_out = raw_answer >>> 15;
-    assign audio_out = shifted_before_out[15:0];
+    assign audio_out = {shifted_before_out[36], shifted_before_out[14:0]};
 
     
     

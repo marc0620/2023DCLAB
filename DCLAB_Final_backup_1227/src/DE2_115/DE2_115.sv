@@ -140,7 +140,8 @@ module DE2_115 (
 logic key0down, key1down, key2down, key3down;
 logic CLK_12M, CLK_100K, CLK_800K;
 logic [5:0] DISPLAY_TIME;
-logic [2:0] top_state, rec_state,dsp_state;
+logic [2:0] top_state, rec_state,dsp_state,kb_state,kb_state_next;
+
 assign AUD_XCK = CLK_12M;
 
 audio pll0( // generate with qsys, please follow lab2 tutorials
@@ -207,15 +208,7 @@ Top top0(
 	.i_key_0(key0down),
 	.i_key_1(key1down),
 	.i_key_2(key2down),
-	.i_speed(SW[2:0]),
-	.i_fast(SW[3]),
-	.i_slow_0(SW[4]),
-	.i_slow_1(SW[5]),
-	.i_reverse(SW[6]),
-	.i_volume_l(SW[8:7]),
-	.i_volume_r(SW[10:9]),
-	.i_shift(SW[17:11]),
-	.o_leds(LEDG),
+	.o_ledg(LEDG),
 	//AudDSP and SRAM
 	.o_SRAM_ADDR(SRAM_ADDR), // [19:0]
 	.io_SRAM_DQ(SRAM_DQ), // [15:0]
@@ -228,14 +221,12 @@ Top top0(
 	//.o_D_wdata(o_D_wdata),
 	//.i_D_rdata(i_D_rdata),
 	//.o_D_we_n(o_D_we_n),
-
+	.i_sw(SW),
 	
 	// I2C
 	.i_clk_100k(CLK_100K),
 	.o_I2C_SCLK(I2C_SCLK),
 	.io_I2C_SDAT(I2C_SDAT),
-	.PS2_CLK(PS2_CLK),
-	.PS2_DAT(PS2_DAT),
 	
 	// AudPlayer
 	.i_AUD_ADCDAT(AUD_ADCDAT),
@@ -247,8 +238,6 @@ Top top0(
 	// SEVENDECODER (optional display)
 	.o_display_time(DISPLAY_TIME),
 	.o_state(top_state),
-	.o_state_RECD(rec_state),
-	.o_state_DSP(dsp_state),
 	// .o_record_time(recd_time),
 	// .o_play_time(play_time),
 
@@ -263,7 +252,13 @@ Top top0(
 
 	// LED
 	// .o_ledg(LEDG), // [8:0]
-	.o_ledr(LEDR) // [17:0]
+	.o_ledr(LEDR), // [17:0]
+	// PS/2
+	.PS2_CLK(PS2_CLK),
+	.PS2_DAT(PS2_DAT),
+	.GPIO(GPIO),
+	.o_kb_state(kb_state),
+	.o_kb_state_next(kb_state_next)
 );
 
 //seven segment
@@ -273,21 +268,16 @@ Top top0(
   	.o_seven_one(HEX0)
  );
   SevenHexDecoder seven_dec2(
- 	.i_hex(DISPLAY_TIME),
+ 	.i_hex(kb_state),
  	.o_seven_ten(HEX3),
   	.o_seven_one(HEX2)
  );
 
  SevenHexDecoder seven_dec3(
- 	.i_hex(SW[2:0] + 5'b1),
+ 	.i_hex(kb_state_next),
  	.o_seven_ten(HEX5),
   	.o_seven_one(HEX4)
  );
- assign HEX7 = (SW[3]) ? 7'b0001110 :
-			   (SW[4] || SW[5]) ? 7'b0010010 : 
-			   (SW[6]) ? 7'b0001000 : 7'b1000000;
- assign HEX6 = (SW[4]) ? 7'b1000000 :
-			   (SW[5]) ? 7'b1111001 : '1;
 
 // comment those are use for display
 //assign HEX0 = '1;
