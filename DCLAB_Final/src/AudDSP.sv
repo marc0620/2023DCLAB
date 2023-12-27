@@ -4,11 +4,6 @@ module AudDSP(
 	input i_start,
 	input i_pause,
 	input i_stop,
-	input [2:0] i_speed, //i_speed + 1 is the real speed
-	input i_fast,
-	input i_slow_0, // constant interpolation
-	input i_slow_1, // linear interpolation
-    input i_reverse,
 	input i_daclrck,
 	input [6:0] i_shift,
 	input [15:0] i_sram_data,
@@ -397,7 +392,7 @@ module AudDSP(
                 if(i_start) begin
                     state_w = S_PLAY;
                     o_dac_data_w = chosen_data;
-                    o_sram_addr_w = (i_reverse)? i_stop_addr : o_sram_addr_r;
+                    o_sram_addr_w = o_sram_addr_r;
                     prev_data_w = 16'd0;
                     counter_w = 4'd0;
                 end
@@ -410,23 +405,7 @@ module AudDSP(
                 end
             end
             S_PLAY: begin
-                if((i_stop || (o_sram_addr_r >= i_stop_addr)) && i_slow_1) begin
-                    state_w = S_IDLE;
-                    o_dac_data_w = chosen_data;
-                    o_sram_addr_w = 20'd0;
-                    prev_data_w = 16'b0;
-                    counter_w = 4'd0;
-                    o_fin_next=1;
-                end
-                else if(i_stop|| ((o_sram_addr_r == 20'd0) && (i_reverse))) begin
-                    state_w = S_IDLE;
-                    o_dac_data_w = 16'bZ;
-                    o_sram_addr_w = 20'd0;
-                    prev_data_w = 16'b0;
-                    counter_w = 4'd0;
-                    o_fin_next=1;
-                end
-                else if(i_pause) begin
+                if(i_pause) begin
                     state_w = S_PAUSE;
                     o_dac_data_w = 16'bZ;
                     o_sram_addr_w = o_sram_addr_r;

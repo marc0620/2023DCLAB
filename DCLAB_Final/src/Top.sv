@@ -4,13 +4,6 @@ module Top (
 	input i_key_0,
 	input i_key_1,
 	input i_key_2,
-	input [2:0] i_speed, // design how user can decide mode on your own
-	input i_fast,
-	input i_slow_0,
-	input i_slow_1,
-	input i_reverse,
-	input [1:0] i_volume_r,
-	input [1:0] i_volume_l,
 	input [6:0] i_shift,
 	// AudDSP and SRAM
 	//output [25:0] o_D_addr,
@@ -112,10 +105,6 @@ module Top (
 	assign o_SRAM_UB_N = 1'b0;
 
 	assign play_en  = (state_w == S_PLAY);
-	assign o_leds[0]=1'b1;
-	assign o_leds[1]=i_AUD_BCLK;
-	assign o_leds[3:2] =i_volume_l;
-	assign o_leds[5:4] =i_volume_r;
 	assign o_state = state_r;
 	// below is a simple example for module division
 	// you can design these as you like
@@ -169,11 +158,6 @@ AudDSP dsp0(
 	.i_start(dsp_start),
 	.i_pause(dsp_pause),
 	.i_stop(dsp_stop),
-	.i_speed(i_speed),
-	.i_fast(i_fast),
-	.i_slow_0(i_slow_0), // constant interpolation
-	.i_slow_1(i_slow_1), // linear interpolation
-	.i_reverse(i_reverse),
 	.i_daclrck(i_AUD_DACLRCK),
 	.i_sram_data(pseudo_SRAM),
 	.i_stop_addr(addr_record),
@@ -196,21 +180,7 @@ AudPlayer player0(
 	.o_aud_dacdat(o_AUD_DACDAT),
 	.o_state(o_state_PLAY)
 );
-	SevenSegmentDisplayTime seven0(
-		.rst_n(i_rst_n),
-		.clk(i_clk),
-		.recorder_start(rec_start),
-		.recorder_pause(rec_pause),
-		.recorder_stop(rec_stop),
-		.player_start(dsp_start),
-		.player_pause(dsp_pause),
-		.player_stop(dsp_stop),
-		.i_speed(i_speed),
-		.i_fast(i_fast),
-		.i_slow(i_slow_0 || i_slow_1),
-		.i_state(state_r == S_PLAY),
-		.o_display(o_display_time)
-	);
+
 
 	//=== LED ===
 	LEDVolume led0(
