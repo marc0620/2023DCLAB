@@ -37,9 +37,9 @@ always_ff @(posedge i_clk or negedge i_rst_n) begin
         for (int i = 0; i < 32; i++) begin
             if (i_data[i] == 1) begin
                 if(space) begin
-                    generators[i]<=generators[i]+$signed(STEPS[i]);
-                end else begin
                     generators[i]<=generators[i]+$signed(STEPS[i+12]);
+                end else begin
+                    generators[i]<=generators[i]+$signed(STEPS[i]);
                 end
             end else begin
                 generators[i]<=0;
