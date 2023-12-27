@@ -302,7 +302,7 @@ always_comb begin
                     8'h39: begin
                         o_key_w[32] = 1'b1;
                     end
-                    8'h3a: begin
+                    8'hb9: begin
                         o_key_w[32] = 1'b0;
                     end
                 endcase
