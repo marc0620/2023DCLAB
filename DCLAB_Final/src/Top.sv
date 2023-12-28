@@ -53,15 +53,38 @@ module Top (
 	assign o_leds[0]=key_array[32];
 	assign io_I2C_SDAT = (i2c_oen) ? i2c_sdat : 1'bz;
 
-	logic [15:0] pseudo_SRAM;
-	always_ff @(posedge i_clk or negedge i_rst_n) begin
+	logic [15:0] pseudo_SRAM, data_record_compressed;
+	always_ff @(negedge i_AUD_DACLRCK or negedge i_rst_n) begin
 		if (~i_rst_n) begin
 			pseudo_SRAM <= 16'd0;
 		end
 		else begin
-			pseudo_SRAM <= data_record;
+			pseudo_SRAM <= data_record_compressed;
 		end
 	end
+
+	// compress data_record
+	// always_comb begin
+    //     case (add_all_32_uncompressed[36:34])
+    //         -4'sd8: add_all_32_compressed = ((add_all_32_uncompressed >>> 1)- 37'b0_1000_0000_0000_0000_0000_0000_0000_0000_0000);
+    //         -4'sd7: add_all_32_compressed = ((add_all_32_uncompressed >>> 1)- 37'b0_1000_0000_0000_0000_0000_0000_0000_0000_0000);
+    //         -4'sd6: add_all_32_compressed = ((add_all_32_uncompressed >>> 1)- 37'b0_1000_0000_0000_0000_0000_0000_0000_0000_0000);
+    //         -4'sd5: add_all_32_compressed = ((add_all_32_uncompressed >>> 1)+ (add_all_32_uncompressed >>> 2) - 37'b0_0101_1000_0000_0000_0000_0000_0000_0000_0000);
+    //         -4'sd4: add_all_32_compressed = ((add_all_32_uncompressed >>> 1)+ (add_all_32_uncompressed >>> 2) - 37'b0_0101_1000_0000_0000_0000_0000_0000_0000_0000);
+    //         -4'sd3: add_all_32_compressed = (add_all_32_uncompressed + (add_all_32_uncompressed >>> 1) - 37'b0_0001_0000_0000_0000_0000_0000_0000_0000_0000);
+    //         -4'sd2: add_all_32_compressed = (add_all_32_uncompressed + (add_all_32_uncompressed >>> 1) - 37'b0_0001_0000_0000_0000_0000_0000_0000_0000_0000);
+    //         -4'sd1: add_all_32_compressed = (add_all_32_uncompressed <<< 1);
+    //          4'sd0: add_all_32_compressed = (add_all_32_uncompressed <<< 1);
+    //          4'sd1: add_all_32_compressed = (add_all_32_uncompressed + (add_all_32_uncompressed >>> 1) + 37'b0_0001_0000_0000_0000_0000_0000_0000_0000_0000);
+    //          4'sd2: add_all_32_compressed = (add_all_32_uncompressed + (add_all_32_uncompressed >>> 1) + 37'b0_0001_0000_0000_0000_0000_0000_0000_0000_0000);
+    //          4'sd3: add_all_32_compressed = ((add_all_32_uncompressed >>> 1)+ (add_all_32_uncompressed >>> 2) + 37'b0_0101_1000_0000_0000_0000_0000_0000_0000_0000);
+    //          4'sd4: add_all_32_compressed = ((add_all_32_uncompressed >>> 1)+ (add_all_32_uncompressed >>> 2) + 37'b0_0101_1000_0000_0000_0000_0000_0000_0000_0000);
+    //          4'sd5: add_all_32_compressed = ((add_all_32_uncompressed >>> 1)+ 37'b0_1000_0000_0000_0000_0000_0000_0000_0000_0000);
+    //          4'sd6: add_all_32_compressed = ((add_all_32_uncompressed >>> 1)+ 37'b0_1000_0000_0000_0000_0000_0000_0000_0000_0000);
+    //         default:  add_all_32_compressed = ((add_all_32_uncompressed >>> 1)+ 37'b0_1000_0000_0000_0000_0000_0000_0000_0000_0000);
+    //     endcase
+    // end
+
 
 
 	assign play_en  = (state_w == S_PLAY);

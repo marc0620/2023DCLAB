@@ -132,12 +132,18 @@ module AudDSP(
 
     
     // do add_all_32 compression
-
-    assign add_all_32 = i_bit_test[0]? add_all_32_uncompressed : add_all_32_compressed;
+    always_ff @(posedge i_clk or negedge i_rst_n) begin
+        if(~i_rst_n) begin
+            add_all_32 <= 0;
+        end 
+        else begin
+            add_all_32 <= i_bit_test[0]? add_all_32_uncompressed : add_all_32_compressed;
+        end
+    end
     
     
     always_comb begin
-        case (add_all_32_uncompressed[36:34])
+        case (add_all_32_uncompressed[36:33])
             -4'sd8: add_all_32_compressed = ((add_all_32_uncompressed >>> 1)- 37'b0_1000_0000_0000_0000_0000_0000_0000_0000_0000);
             -4'sd7: add_all_32_compressed = ((add_all_32_uncompressed >>> 1)- 37'b0_1000_0000_0000_0000_0000_0000_0000_0000_0000);
             -4'sd6: add_all_32_compressed = ((add_all_32_uncompressed >>> 1)- 37'b0_1000_0000_0000_0000_0000_0000_0000_0000_0000);
@@ -156,6 +162,8 @@ module AudDSP(
             default:  add_all_32_compressed = ((add_all_32_uncompressed >>> 1)+ 37'b0_1000_0000_0000_0000_0000_0000_0000_0000_0000);
         endcase
     end
+
+    
 
 
 
