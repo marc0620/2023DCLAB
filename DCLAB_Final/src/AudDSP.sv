@@ -45,17 +45,18 @@ module AudDSP(
     logic signed [15:0] chosen_multi_data;
     logic signed [15:0] chosen_added_all;
     always_comb begin
-        case({i_shift[6],i_shift[0]})
-            2'd0:    chosen_data = i_sram_data;
-            2'd1:    chosen_data = chosen_multi_data;
-            2'd2:    chosen_data = chosen_added_all;
-            default: chosen_data = chosen_filter_data;
+        case({i_bit_test[1],i_shift[6],i_shift[5]})
+            3'd0:    chosen_data = i_sram_data;
+            3'd1:    chosen_data = chosen_filter_data;
+            3'd2:    chosen_data = carrier_data;
+            3'd3:    chosen_data = chosen_carrier_filter_data;
+            default: chosen_data = chosen_added_all;
         endcase
     end
 
     // IIR chosen
     always_comb begin
-        case(i_shift[5:1]) 
+        case(i_shift[4:0]) 
             5'd0:   chosen_filter_data = IIR_audio_out_300Hz;
             5'd1:   chosen_filter_data = IIR_audio_out_350Hz;
             5'd2:   chosen_filter_data = IIR_audio_out_400Hz;
@@ -170,7 +171,6 @@ module AudDSP(
 
     always_comb begin
         case(i_bit_test)
-            11'b00000000010:   chosen_added_all = {add_all_32[36],add_all_32[29:15]};
             11'b00000000100:   chosen_added_all = {add_all_32[36],add_all_32[28:14]};
             11'b00000001000:   chosen_added_all = {add_all_32[36],add_all_32[27:13]};
             11'b00000010000:   chosen_added_all = {add_all_32[36],add_all_32[26:12]};
@@ -188,9 +188,9 @@ module AudDSP(
 
 
      always_comb begin
-        case(i_shift[5:1]) 
-            5'd0:   chosen_multi_data = multi_350 ;
-            5'd1:   chosen_multi_data = multi_300 ;
+        case(i_shift[4:0]) 
+            5'd0:   chosen_multi_data = multi_300 ;
+            5'd1:   chosen_multi_data = multi_350 ;
             5'd2:   chosen_multi_data = multi_400 ;
             5'd3:   chosen_multi_data = multi_450 ;
             5'd4:   chosen_multi_data = multi_500 ;
@@ -228,7 +228,7 @@ module AudDSP(
 
 
      always_comb begin
-        case(i_shift[5:1]) 
+        case(i_shift[4:0]) 
             5'd0:   chosen_carrier_filter_data = carrier_audio_out_300Hz;   // [15:0]
             5'd1:   chosen_carrier_filter_data = carrier_audio_out_350Hz;  //   [16:1]
             5'd2:   chosen_carrier_filter_data = carrier_audio_out_400Hz;   // [17:2]
